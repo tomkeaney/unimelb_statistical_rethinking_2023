@@ -1,2 +1,27 @@
 # unimelb_statistical_rethinking_2023
 A follow along of Richard McElreath's statistical rethinking course, to which he graciously provides open access. Based in the School of Biosciences at Melbourne uni.
+
+The course outline and access to all lectures is available [here](https://github.com/rmcelreath/stat_rethinking_2023). 
+
+Lectures come out twice a week, starting on the 2nd of January. My suggestion is that we **meet every Thursday at 11am in Drummon North** to discuss the weeks lectures and tackle the problems provided. This means you simply need to listen to two hour-long lectures each week before the Thursday. I have quite thorough notes from previous years of the course, but it would be great if we could create a new markdown document to call upon in future.  
+
+There are at least two options for how to follow along with the R code presented in the lectures. You can choose to follow the lectures and fit models using McElreath's `rethinking` package. Or, you can follow my suggestion and fit models using the `brms` package - a near complete conversion of the course to tidyverse + brms style is available [here](https://bookdown.org/content/4857/). Check out the course outline if you have a scpeific preference for another option. 
+
+Whatever you choose, to fit bayesian models you'll need to install `rstan` and `cmdstanr` on your computer. 
+
+To do this, here are instructions straight from McElreath's rehtinking github repo:
+
+First, install the C++ toolchain and install the `rstan` package. Go to https://mc-stan.org/users/interfaces/rstan.html and follow the instructions for your platform. The biggest challenge is getting a C++ compiler configured to work with your installation of R. The instructions are quite thorough. Obey them, and you'll succeed.
+
+Second, install the `cmdstanr` package. Visit https://mc-stan.org/cmdstanr/. The first time you install `cmdstanr`, you will also need compile the libraries with `cmdstanr::install_cmdstan()`. All this of this bother is worth it. You just have to do it once.
+
+Third, once `rstan` and `cmdstanr` are installed (almost there), then you can install `rethinking` or `brms` from within R using:
+
+**rethinking**
+
+`install.packages(c("coda","mvtnorm","devtools","loo","dagitty","shape"))
+devtools::install_github("rmcelreath/rethinking")`
+
+**brms**
+
+Really easy, just install the `brms` package in R
