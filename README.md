@@ -1,11 +1,25 @@
 # unimelb_statistical_rethinking_2023
+
 A follow along of Richard McElreath's statistical rethinking course, to which he graciously provides open access. Based in the School of Biosciences at Melbourne uni.
 
-The course outline and access to all lectures is available [here](https://github.com/rmcelreath/stat_rethinking_2023). 
+[Course outline](https://github.com/rmcelreath/stat_rethinking_2023)
 
-Lectures come out twice a week, starting on the 2nd of January. My suggestion is that we **meet every Thursday at 11am in Drummon North** to discuss the weeks lectures and tackle the problems provided. This means you simply need to listen to two hour-long lectures each week before the Thursday. I have quite thorough notes from previous years of the course, but it would be great if we could create a new markdown document to call upon in future.  
+[Youtube lectures](https://www.youtube.com/playlist?list=PLDcUM9US4XdPz-KxHM4XHt7uUVGWWVSus)
 
-There are at least two options for how to follow along with the R code presented in the lectures. You can choose to follow the lectures and fit models using McElreath's `rethinking` package. Or, you can follow my suggestion and fit models using the `brms` package - a near complete conversion of the course to tidyverse + brms style is available [here](https://bookdown.org/content/4857/). Check out the course outline if you have a scpeific preference for another option. 
+Lectures come out twice a week, starting on the 2nd of January. We'll run a week behind the actual course so that you have more flexibility with fitting the lectures into your week. 
+
+## Discussion session
+
+We will **meet every Thursday at 11am in Drummond North** 
+
+The purpose of this session is to discuss the weeks lectures and tackle the problems provided. If you can't make it, no problem! Join via the zoom link listed below. This means you simply need to listen to two hour-long lectures each week before the Thursday. I have quite thorough notes from previous years of the course, but it would be great if we could create a new markdown document to call upon in future. I'll upload these to this page weekly, following our discussion session. 
+
+**Zoom link**: https://unimelb.zoom.us/j/84067147015?pwd=YUJ4RGNXck1QUjdRN1RYRlJlVEJlUT09
+Password: 682590
+
+## Coding Bayesian models in R
+
+There are at least two options for how to follow along with the R code presented in the lectures. You can choose to follow the lectures and fit models using McElreath's `rethinking` package. Or, you can follow my suggestion and fit models using the `brms` package - a near complete conversion of the course to tidyverse + brms style is available [here](https://bookdown.org/content/4857/). Check out the course outline if you have a specific preference for another option. 
 
 Whatever you choose, to fit bayesian models you'll need to install `rstan` and `cmdstanr` on your computer. 
 
