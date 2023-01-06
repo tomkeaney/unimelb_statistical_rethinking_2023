@@ -15,6 +15,7 @@ We will **meet every Thursday at 11am in Drummond North**
 The purpose of this session is to discuss the weeks lectures and tackle the problems provided. If you can't make it, no problem! Join via the zoom link listed below. This means you simply need to listen to two hour-long lectures each week before the Thursday. I have quite thorough notes from previous years of the course, but it would be great if we could create a new markdown document to call upon in future. I'll upload these to this page weekly, following our discussion session. 
 
 **Zoom link**: https://unimelb.zoom.us/j/84067147015?pwd=YUJ4RGNXck1QUjdRN1RYRlJlVEJlUT09
+
 Password: 682590
 
 ## Coding Bayesian models in R
