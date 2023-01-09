@@ -1,0 +1,125 @@
+---
+title: "Statistical rethinking 2023 (brms examples)"
+subtitle: "Melbourne biosciences notes"
+execute: 
+  warning: false
+format: 
+  html:
+      theme: Minty
+      max-width: 1800px
+      toc: true
+      toc-location: left
+      code-fold: true
+      smooth-scroll: true
+---
+
+# Load the packages required to run code
+
+```{r}
+library(tidyverse) # for tidy coding
+library(brms) # for fitting stan models
+library(patchwork) # for combining plots
+library(ggdag) # drawing dags
+library(tidybayes) # for bayesian data visualisation
+library(bayesplot) # more bayes data vis
+library(MetBrewer) # colours 
+```
+
+
+$~$
+
+# Lecture 1: The Golem of Prague
+* * * *
+
+$~$
+
+**Causal inference**: the attempt to understand the scientific causal model using data.
+
+- It is prediction - _Knowing a cause means being able to predict the consequences of an intervention_
+
+- It is a kind of imputation - _Knowing a cause means being able to construct unobserved counterfactual outcomes_
+
+- _What if I do this_ types of questions.
+
+Causal inference is intimately related to the **description of populations** and the **design of research questions**. This is because all three depend upon causal models/knowledge.
+
+Describing populations depends upon causal inference because nealry always description depends upon the sample of the population wich you are using to predict population charactetiscs.
+
+$~$
+
+## DAGs (Directed acyclic graphs)
+
+$~$
+
+- Heuristic causal models that clarify scientific thinking.
+
+- We can use these to produce appropriate statistical models.
+
+- These help us think about the science before we think about the data.
+
+- Helps with questions like "what variables should we include in an analysis?"
+
+- An integral part of the course that will come up over and over again.
+
+An example:
+
+_Lets make a function to speed up the DAG making process. We'll use this a lot_
+
+```{r}
+
+# Lets make a function to speed up the DAG making process. We'll use this a lot
+
+gg_simple_dag <- function(d) {
+  
+  d %>% 
+    ggplot(aes(x = x, y = y, xend = xend, yend = yend)) +
+    geom_dag_point(color = met.brewer("Hiroshige")[4]) +
+    geom_dag_text(color = met.brewer("Hiroshige")[7]) +
+    geom_dag_edges() + 
+    theme_dag()
+}
+
+dagify( X ~ A + C,
+        C ~ A + B,
+        Y ~ X + C + B,  
+        coords = tibble(name = c("A", "C", "B", "X", "Y"),
+                         x = c(1, 2, 3, 1, 3),
+                         y = c(2, 2, 2, 1, 1))) %>% 
+  gg_simple_dag()
+```
+
+$~$
+
+## Golems
+
+$~$
+
+Statistical models are akin to Golems - clay robots brought to life by magic to follow specific tasks. The trouble is, they follow tasks extremely literally and are blind to their creators intent, so even those born out of the purest of intentions can cause great harm. Models are another form of robot; if we apply models within the wrong context they will not help us at all.
+
+Ecological models are rarely designed to falsify null-hypotheses. This is because there are many possible non-null models or put another way there are no true null models in many systems. This is problematic because null models underlie how the majority of biologists do statistics!
+
+A more appropriate question is to ask how multiple process models that we can identify are different.
+
+> Should falsify the explanatory model, not the null model. Make predictions and try and falify those. _Karl Popper_
+
+$~$
+
+## Owls
+
+$~$
+
+Satistical modelling explanations often provide a brief introduction, then leave out many of the important details e.g. step 1: draw two circles, step 2: draw the rest of the fking owl.
+
+**We shall have a specific workflow for fitting models that we will document**
+
+Drawing the owl, or the scientific workflow can be broken down into 5 steps:
+
+1. Theoretical estimand: what are you trying to do in your study in the first place?
+
+2. Some scientific causal model should be identified: step 1 will be precisely defined in the context of a causal model.
+
+3. Use 1 and 2 to build a statistical model.
+
+4. Simulate the scientific casual model to validate that the statistical model from step 3 yields the theoretical estimand i.e. check that our stats model works.
+
+5. Analyse the real data. Note that the real data are only introduced now.
