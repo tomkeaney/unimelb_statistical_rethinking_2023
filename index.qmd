@@ -123,3 +123,541 @@ Drawing the owl, or the scientific workflow can be broken down into 5 steps:
 4. Simulate the scientific casual model to validate that the statistical model from step 3 yields the theoretical estimand i.e. check that our stats model works.
 
 5. Analyse the real data. Note that the real data are only introduced now.
+
+$~$
+
+# Lecture 2: The garden of forking data
+* * * *
+
+$~$
+
+## Globe tossing
+
+To estimate the proportion of water on planet earth, we collect data by tossing a globe 10 times and record whether our left index finger lands on land or water.
+
+Our results are shown in the code below
+
+```{r}
+globe_toss_data <- tibble(toss = c("l", "w", "l", "l", "w", "w", "w", "l", "w", "w")) 
+
+globe_toss_data
+```
+
+Remember the owl workflow:
+
+1. Define generative model of sample.
+
+2. Design estimand.
+
+3. Use 1 and 2 to build a statistical model.
+
+4. Test (3) using (1).
+
+5. Analyse sample and summarise.
+
+$~$
+
+**Step 1**
+
+Some true proportion of water, $p$.
+
+We can measure this indirectly using:
+
+- $N$: the number of globe tosses
+
+- $W$: the number of water observations
+
+- $L$: the number of land observations
+
+```{r}
+#Put dag here
+
+#N affects L and W but not the other way around
+
+# P also influences W and L
+```
+
+**Bayesian data analysis**
+
+For each possible explanation of the data, count all the ways data can happen. Explanations with more ways to produce the data are more plausible (this is entropy).
+
+Toss globe, probability $p$ of observing $W$, $1 - p$ of $L$.
+
+Each toss is random because it is chaotic (there are forces that could be theoretically measured i.e. velocity, exact starting orientation, but we are not equipped to measure these in real time, so the process appears random).
+
+Each toss is independent of one another.
+
+What are the relative number of ways we could get the data we actually got, given the process that generates all the possible datasets that could've been born from the process?
+
+$~$
+
+### A 4 sided globe (dice)
+
+In Bayesian analysis: enumerate all possible outcomes. 
+
+
+```{r}
+# code land as 0 and water as 1 and create possibility data
+# create the dataframe (tibble)
+
+d <- tibble(p_1 = 0,
+            p_2 = rep(1:0, times = c(1, 3)),
+            p_3 = rep(1:0, times = c(2, 2)),
+            p_4 = rep(1:0, times = c(3, 1)),
+            p_5 = 1)
+
+d %>% 
+  gather() %>% 
+  mutate(x = rep(1:4, times = 5),
+         possibility = rep(1:5, each = 4)) %>% 
+  
+  ggplot(aes(x = x, y = possibility, 
+             fill = value %>% as.character())) +
+  geom_point(shape = 21, size = 9) +
+  scale_fill_manual(values = c("white", "navy")) +
+  scale_x_continuous(NULL, breaks = NULL) +
+  coord_cartesian(xlim = c(.75, 4.25),
+                  ylim = c(.75, 5.25)) +
+  theme_minimal() +
+  theme(legend.position = "none",
+        text = element_text(size = 18))    
+
+```
+
+
+The data: the dice is rolled three times: water, land, water.
+
+Consider all possible answers and how they would occur.
+
+e.g. if we hypothesise that 25% of the earth is covered by water, what are all the possible ways to produce our sample?
+
+```{r}
+
+# create a tibble of all the possibilities per marble draw, with columns position (where to appear on later figures x axis), draw (what number draw is it? and how many for each number? where to appear on figures y axis) and fill (colour of ball for figure)
+
+d <- tibble(position = c((1:4^1) / 4^0, 
+                         (1:4^2) / 4^1, 
+                         (1:4^3) / 4^2),
+            draw     = rep(1:3, times = c(4^1, 4^2, 4^3)),
+            fill     = rep(c("b", "w"), times = c(1, 3)) %>% 
+              rep(., times = c(4^0 + 4^1 + 4^2)))
+
+# we wish to make a path diagram, for which we will need connecting lines, create two more tibbles for these
+
+lines_1 <- tibble(x    = rep((1:4), each = 4),
+                  xend = ((1:4^2) / 4),
+                  y    = 1,
+                  yend = 2)
+
+lines_2 <- tibble(x    = rep(((1:4^2) / 4), each = 4),
+                  xend = (1:4^3) / (4^2),
+                  y    = 2,
+                  yend = 3)
+
+# We’ve generated the values for position (i.e., the x-axis), in such a way that they’re all justified to the right, so to speak. But we’d like to center them. For draw == 1, we’ll need to subtract 0.5 from each. For draw == 2, we need to reduce the scale by a factor of 4 and we’ll then need to reduce the scale by another factor of 4 for draw == 3. The ifelse() function will be of use for that.
+
+d <- d %>% 
+  mutate(denominator = ifelse(draw == 1, .5,
+                              ifelse(draw == 2, .5 / 4,
+                                     .5 / 4^2))) %>% 
+  mutate(position    = position - denominator)
+
+lines_1 <- lines_1 %>% 
+  mutate(x    = x - .5,
+         xend = xend - .5 / 4^1)
+
+lines_2 <- lines_2 %>% 
+  mutate(x    = x - .5 / 4^1,
+         xend = xend - .5 / 4^2)
+
+# create the plot, using geom_segment to add the lines - note coord_polar() which gives th eplot a globe-like effect. scale_x_continuous and the y equivalent have been used to remove axis lables and titles
+
+d %>% 
+  ggplot(aes(x = position, y = draw)) +
+  geom_segment(data  = lines_1,
+               aes(x = x, xend = xend,
+                   y = y, yend = yend),
+               size  = 1/3) +
+  geom_segment(data  = lines_2,
+               aes(x = x, xend = xend,
+                   y = y, yend = yend),
+               size  = 1/3) +
+  geom_point(aes(fill = fill),
+             shape = 21, size = 4) +
+  scale_fill_manual(values  = c("navy", "white")) +
+  scale_x_continuous(NULL, limits = c(0, 4), breaks = NULL) +
+  scale_y_continuous(NULL, limits = c(0.75, 3), breaks = NULL) +
+  theme_minimal() +
+  theme(panel.grid      = element_blank(),
+        legend.position = "none") +
+  coord_polar()
+
+```
+
+
+Prune the number of possible outcomes down to those that are consistent with the data.
+
+e.g. there are 3 paths consistent with our dice rolling experiment for the given data and the given hypothesis.
+
+```{r}
+lines_1 <-
+  lines_1 %>% 
+  mutate(remain = c(rep(0:1, times = c(1, 3)),
+                    rep(0,   times = 4 * 3)))
+
+lines_2 <-
+  lines_2 %>% 
+  mutate(remain = c(rep(0,   times = 4),
+                    rep(1:0, times = c(1, 3)) %>% 
+                      rep(., times = 3),
+                    rep(0,   times = 12 * 4)))
+
+d <-
+  d %>% 
+  mutate(remain = c(rep(1:0, times = c(1, 3)),
+                    rep(0:1, times = c(1, 3)),
+                    rep(0,   times = 4 * 4),
+                    rep(1:0, times = c(1, 3)) %>% 
+                      rep(., times = 3),
+                    rep(0,   times = 12 * 4))) 
+
+# finally, the plot:
+d %>% 
+  ggplot(aes(x = position, y = draw)) +
+  geom_segment(data  = lines_1,
+               aes(x = x, xend = xend,
+                   y = y, yend = yend,
+                   alpha = remain %>% as.character()),
+               size  = 1/3) +
+  geom_segment(data  = lines_2,
+               aes(x = x, xend = xend,
+                   y = y, yend = yend,
+                   alpha = remain %>% as.character()),
+               size  = 1/3) +
+  geom_point(aes(fill = fill, alpha = remain %>% as.character()),
+             shape = 21, size = 4) +
+  # it's the alpha parameter that makes elements semitransparent
+  scale_alpha_manual(values = c(1/10, 1)) +
+  scale_fill_manual(values  = c("navy", "white")) +
+  scale_x_continuous(NULL, limits = c(0, 4), breaks = NULL) +
+  scale_y_continuous(NULL, limits = c(0.75, 3), breaks = NULL) +
+  theme_minimal() +
+  theme(panel.grid      = element_blank(),
+        legend.position = "none") +
+  coord_polar()
+```
+
+
+Is 3 ways to produce the sample big or small, to find out, compare with other possibilities.
+
+e.g. lets make another conjecture - all land or all water - we have a land and water observation so there are zero ways that the all land/water hypotheses are consistent with the data.
+
+
+```{r}
+# if we make two custom functions, here, it will simplify the code within `mutate()`, below
+n_water <- function(x){
+  rowSums(x == "W")
+}
+
+n_land <- function(x){
+  rowSums(x == "L")
+}
+
+t <-
+  # for the first four columns, `p_` indexes position
+  tibble(p_1 = rep(c("L", "W"), times = c(1, 4)),
+         p_2 = rep(c("L", "W"), times = c(2, 3)),
+         p_3 = rep(c("L", "W"), times = c(3, 2)),
+         p_4 = rep(c("L", "W"), times = c(4, 1))) %>% 
+  mutate(`roll 1: water`  = n_water(.),
+         `roll 2: land` = n_land(.),
+         `roll 3: water`  = n_water(.)) %>% 
+  mutate(`ways to produce` = `roll 1: water` * `roll 2: land` * `roll 3: water`)
+
+t %>% 
+  knitr::kable()
+```
+
+Unglamorous basis of applied probability: _Things that can happen more ways are more plausible._
+
+This is Bayesian inference. Given a set of assumptions (hypotheses) the number of ways the numbers could have occurred accoridng to those assumptions (hypotheses) is the posterior probability distribution.
+
+But we don't really have enough evidence to be confident in a prediction. So lets roll the dice again. In bayes world a process called **Bayesian updating** exists, that saves you from running the draws again, in favour of just updating previous counts (or data). Bayesian updating is simple multiplication e.g. we roll another water, for the 3 water hypothesis there are 3 paths for this to occur so we multiply 9 x 3, resulting in 27 possible paths consistent with the new dataset.
+
+Eventually though, the garden gets really big. This is where your computer comes in and it starts to make more sense to work with probabilities rather than counts.
+
+```{r}
+
+W <- sum(globe_toss_data == "w")
+L <- sum(globe_toss_data == "l")
+p <- c(0, 0.25, 0.5, 0.75, 1) # proportions W
+ways <- sapply(p, function(q) (q*4)^W * ((1 - q)*4)^L)
+prob <- ways/sum(ways)
+
+posterior <- cbind(p, ways, prob) %>% 
+  as_tibble() %>% 
+  mutate(p = as.character(p))
+
+posterior %>% 
+ggplot(aes(x = p, y = prob)) +
+  geom_col() +
+  labs(x = "proportion water", y = "probability") +
+  theme_minimal()
+```
+
+$~$
+
+### Test before you est
+
+1. Code a generative simulation
+
+2. Code an estimator
+
+3. Test (2) with (1)
+
+Build a simulation
+
+```{r}
+sim_globe <- function(p = 0.7, N =9) {
+  sample(c("W", "L"), size = N, prob = c(p, 1-p), replace = TRUE)
+}
+
+# W and L are the possible observations
+
+# N is number of tosses
+
+# prob is the probabilities of water and land occurring
+```
+
+The simulation does this:
+
+```{r}
+sim_globe()
+```
+
+Now lets test it on extreme settings
+
+e.g. all water
+
+```{r}
+
+sim_globe(p=1, N = 11)
+    
+```
+
+Looks good
+
+We can also test how close the proportion of water produced in the simulation is to the specified p
+
+```{r}
+sum(sim_globe(p=0.5, N = 1e4) == "W") / 1e4
+```
+
+Also looks good.
+
+So based upon our generative model:
+
+Ways for $p$ to produce $W, L = (4p)^W * (4 - 4p)^L $
+
+```{r}
+# function to compute posterior distirbution
+
+compute_posterior <- function(the_sample, poss = c(0, 0.25, 0.5, 0.75, 1)) {
+  W <- sum(the_sample == "W") # the number of W observed
+  L <- sum(the_sample == "L") # the number of L observed
+  ways <- sapply(poss, function(q) (q*4)^W * ((1-q)*4)^L)
+  post <- ways/sum(ways)
+  #bars <- sapply(post, function(q) make_bar(q))
+  tibble(poss, ways, post = round(post, 3))#, bars)
+}
+
+```
+
+We can then simulate the experiment many times with `sim_globe`
+
+```{r}
+compute_posterior(sim_globe())
+```
+
+This allows us to check that our model is doing what we think it is.
+
+$~$
+
+## An infinite number of possibilties
+
+Globes aren't dice. There are an infinite number of possible proportions of the earth covered in water.
+
+To get actual infinity we can turn to math.
+
+The relative number of ways that nay value of $p$ could produce any sample of W and L observations. This is a well know distribution called the **binomial distribution** 
+
+$$p^W(1-p)^L $$
+
+The only trick is normalising to make it a probability. A little calculus is needed (this produces the **beta distirbution**:
+
+$$Pr(W, L|P) = \frac{(W + L)!}{W!L!}p^{W}(1 - p)^{L}$$
+
+Note the normalising constant $\frac{(W + L)!}{W!L!}$
+
+We can use the binomial sampling formula to give us the number of paths through the garden of forking data for this particular problem. That is given some value of P (akin to some number of blue marbles in the bag), the number of ways to see W and L can be worked out using the expression above.
+
+We can use R to calculate this, assuming 6 globe tosses that landed on water out of 10 possible tosses and that P = 0.7:
+
+```{r}
+dbinom(6, 10, 0.7)
+```
+
+This is the relative number of ways that 6 out of 10 can happen given a value of 0.7 for p. For this to be meaningful, we need to work out a probability value for many other values of P. This gives our probability distribution.
+
+Lets plot how bayesian updating works, as we add observations
+
+```{r}
+# add the cumulative number of trials and successes for water to the dataframe.
+
+globe_toss_data <- globe_toss_data %>% mutate(n_trials = 1:10, 
+                                              n_success = cumsum(toss == "w"))
+
+# Struggling to follow this code, awesome figure produced though
+
+sequence_length <- 50
+
+globe_toss_data %>%
+  expand(nesting(n_trials, toss, n_success),
+         p_water = seq(from = 0, to = 1, length.out = sequence_length)) %>%
+  group_by(p_water) %>%
+  mutate(lagged_n_trials = lag(n_trials, k = 1),
+         lagged_n_success = lag(n_success, k =1)) %>%
+  ungroup() %>%
+  mutate(prior = ifelse(n_trials == 1, .5,
+                        dbinom(x = lagged_n_success,
+                               size = lagged_n_trials,
+                               prob = p_water)),
+         likelihood = dbinom(x = n_success,
+                             size = n_trials,
+                             prob = p_water),
+         strip = str_c("n = ", n_trials)
+         ) %>%
+  # the next three lines allow us to normalize the prior and the likelihood, 
+  # putting them both in a probability metric
+  group_by(n_trials) %>%
+  mutate(prior = prior / sum(prior),
+         likelihood = likelihood / sum(likelihood)) %>%
+  # plot time
+  ggplot(aes(x = p_water)) +
+  geom_line(aes(y = prior), linetype = 2) +
+  geom_line(aes(y = likelihood)) +
+  scale_x_continuous("proportion water", breaks = c(0, 0.5, 1)) +
+  scale_y_continuous("plausibility", breaks = NULL) +
+  theme(panel.grid = element_blank()) +
+  facet_wrap(~n_trials, scales = "free_y")
+```
+
+Posterior is continually updated as data points are added.
+
+- Each posterior is simply a multiplication of a set of diagonal lines, like that shown in the first panel. Whether the slope of the line is pos or neg depends on whether the observation is land or water. 
+
+- Every posterior is a prior for the next observation, but the data order doesn't make a difference, in that the posterior will always be the same for a given dataset. **BUT** this assumption can be violated if each observation is not independent.
+
+- Sample size is embodied within the shape of the posterior. Already been accounted for.
+
+**Some big things to grasp about bayes**
+
+1. No minimum sample size, because we have something called a **prior**. Note that estimation sucks with small samples, but that's good! The model doesn't draw too much from too little.
+
+2. Shape of distribution embodies sample size
+
+3. There are no point estimates e.g. means or medians. Everything is a distribution. You will never need to bootstrap again.
+
+4. There is no one true interval - they just communicate the shape of the posterior distribution. No magical number e.g. 95%.
+
+$~$
+
+## From posterior to prediction (brms time)
+
+Here is a nice point to introduce `brms` the main modelling package that I use.
+
+Let's fit a globe tossing model, where we observe 24 water observations from 36 tosses.
+
+```{r}
+b1.1 <-
+  brm(data = list(w = 24), 
+      family = binomial(link = "identity"),
+      w | trials(36) ~ 0 + Intercept,
+      #prior(beta(1, 1), class = b, lb = 0, ub = 1),
+      seed = 2,
+      file = "fits/b02.01")
+
+b1.1
+```
+
+There’s a lot going on in that output. For now, focus on the ‘Intercept’ line. The intercept of a typical regression model with no predictors is the same as its mean. In the special case of a model using the binomial likelihood, the mean is the probability of a 1 in a given trial.
+
+To use the posterior, we can sample from it using the `as_draws_df` function. 
+
+```{r}
+as_draws_df(b1.1) %>% 
+  mutate(n = "n = 36") %>%
+  
+  ggplot(aes(x = b_Intercept)) +
+  geom_density(fill = "black") +
+  scale_x_continuous("proportion water", limits = c(0, 1)) +
+  theme(panel.grid = element_blank(),
+        text = element_text(size = 16)) +
+  facet_wrap(~ n)
+```
+
+
+Another way to do this is to use the `fitted` function 
+
+```{r}
+
+f <-
+  fitted(b1.1, 
+         summary = F,
+         scale = "linear") %>% 
+  data.frame() %>% 
+  set_names("proportion") %>% 
+  as_tibble()
+
+f
+```
+
+Plot the distribution
+
+```{r}
+f %>% 
+  ggplot(aes(x = proportion)) +
+  geom_density(fill = "grey50", color = "grey50") +
+  annotate(geom = "text", x = .08, y = 2.5,
+           label = "Posterior probability") +
+  scale_x_continuous("probability of water",
+                     breaks = c(0, .5, 1),
+                     limits = 0:1) +
+  scale_y_continuous(NULL, breaks = NULL) +
+  theme(panel.grid = element_blank())
+```
+
+Strikingly similar (well, exactly the same).
+
+We can use this distribution of probabilities to predict histograms of water counts.
+
+```{r}
+# the simulation
+set.seed(3) # so we get the same result every time
+
+f <-
+  f %>% 
+  mutate(w = rbinom(n(), size = 36,  prob = proportion))
+
+# the plot
+f %>% 
+  ggplot(aes(x = w)) +
+  geom_histogram(binwidth = 1, center = 0,
+                 color = "grey92", size = 1/10) +
+  scale_x_continuous("number of water samples", breaks = 0:40 * 4) +
+  scale_y_continuous(NULL, breaks = NULL, limits = c(0, 450)) +
+  ggtitle("Posterior predictive distribution") +
+  coord_cartesian(xlim = c(8, 36)) +
+  theme_minimal()
+```
+
