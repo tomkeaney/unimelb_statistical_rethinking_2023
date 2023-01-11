@@ -1,17 +1,22 @@
 ---
 title: "Statistical rethinking 2023 (brms examples)"
 subtitle: "Melbourne biosciences notes"
-execute: 
-  warning: false
-format: 
-  html:
-      theme: Minty
-      max-width: 1800px
-      toc: true
-      toc-location: left
-      code-fold: true
-      smooth-scroll: true
+output:
+  html_document:
+    code_folding: hide
+    depth: 1
+    number_sections: no
+    theme: yeti
+    toc: yes
+    toc_float: yes
+    code_download: true
+editor_options:
+  chunk_output_type: console
 ---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE, cache = FALSE)
+```
 
 # Load the packages required to run code
 
@@ -123,3 +128,4 @@ Drawing the owl, or the scientific workflow can be broken down into 5 steps:
 4. Simulate the scientific casual model to validate that the statistical model from step 3 yields the theoretical estimand i.e. check that our stats model works.
 
 5. Analyse the real data. Note that the real data are only introduced now.
+
