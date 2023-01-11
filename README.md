@@ -8,6 +8,10 @@ A follow along of Richard McElreath's statistical rethinking course, to which he
 
 Lectures come out twice a week, starting on the 2nd of January. We'll run a week behind the actual course so that you have more flexibility with fitting the lectures into your week. 
 
+## Notes
+
+Updated notes can be accessed [here](https://tomkeaney.github.io/unimelb_statistical_rethinking_2023/)
+
 ## Discussion session
 
 We will **meet every Thursday at 11am in Drummond North** 
