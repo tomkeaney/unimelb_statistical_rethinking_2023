@@ -661,3 +661,448 @@ f %>%
   theme_minimal()
 ```
 
+$~$
+
+# Lecture 3: Geocentric models
+* * * * 
+
+$~$
+
+It is entirely possible for a completely false model to make very accurate predictions. 
+
+Geocentrism is Mcelreath's example: the idea that the planets orbit the earth and the model behind it can very accurately predict where Mars will be in the nights sky, including when it will be in retrograde (appearing to orbit in the opposite direction).
+
+However, just because a model allows us to make accurate predictions does not mean it is correct. We now know that the planets orbit the sun, and this more correct model can also explain mar's apparent retrograde movement.
+
+The relevance of this anecdote is that prediction without explanation is thwart with danger, but at the same time models like the geocentric can be very helpful.
+
+**Linear regression** is similar.
+
+- They are often descriptively accurate but mechanistically wrong.
+
+- Few things in nature are perfectly linear as is assumed.
+
+- They are useful but we must remember their limits
+
+$~$
+
+## What are linear models
+
+$~$
+
+- Simple statistical golems that model the mean and the variance of a variable. That's it.
+
+- The mean is sum weighted sum of other variables. As those variables change, the mean and variance changes.
+
+- Anovas, Ancovas, t-tests are all linear models.
+
+**The normal distribution**
+
+- Counts up all the ways the observations can happen given a set of assumptions.
+
+- Given some mean and variance the normal distribution gives you the relative number of ways the data can appear.
+
+The normal distribution is the norm because:
+
+- It is very common in nature.
+
+- It's easy to calculate 
+
+- Very conservative assumptions (spreads probability out more than any other distribution, reducing the risk of mistake, at the expense of accuracy)
+
+To understand why the normal distribution is so common consider a soccer pitch mid-line, and individuals flipping coins that dictate whether they should step to the left or the right.
+
+Many individuals remain close to the line, while a few move towards the extremes. Simply, there are more ways to get a difference of 0 than there is any other result. This creates a bell curve and summarises processes to mean and variance. The path of one individual is shaded black in the figure below.
+
+```{r}
+# lets simulate this scenario
+
+set.seed(4)
+
+pos <-
+  replicate(100, runif(16, -1, 1)) %>% # this is the sim
+  as_tibble() %>%
+  rbind(0, .) %>% # add a row of zeros above simulation results
+  mutate(step = 0:16) %>% # creates a step column
+  gather(key, value, -step) %>% # convert data to long format
+  mutate(person = rep(1:100, each = 17)) %>% # person IDs added
+  # the next lines allow us to make cumulative sums within each person
+  group_by(person) %>%
+  mutate(position = cumsum(value)) %>%
+  ungroup() # allows more data manipulation
+
+ggplot(data = pos,
+       aes(x = step, y = position, group = person)) +
+  geom_vline(xintercept = c(4, 8, 16), linetype = 2) +
+  geom_line(aes(colour = person < 2, alpha = person < 2)) +
+  scale_colour_manual(values = c("skyblue3", "black")) +
+  scale_alpha_manual(values = c(1/5, 1)) +
+  scale_x_continuous("step number", breaks = c(0, 4, 8, 12, 16)) +
+  theme_minimal() +
+  theme(legend.position = "none")
+
+```
+
+The density plot for this scenario at step 16:
+
+```{r}
+
+# first find the sd
+
+sd <-
+  pos %>%
+  filter(step == 16) %>%
+           summarise(sd = sd(position))
+
+pos %>%
+  filter(step == 16) %>%
+  ggplot(aes(x = position)) +
+  stat_function(fun = dnorm,
+                args = list(mean = 0, sd = 2.18),
+                linetype = 2) +
+  geom_density(colour = "transparent", fill = "dodgerblue", alpha = 0.5) +
+  coord_cartesian(xlim = c(-6, 6)) +
+  labs(title = "16 steps",
+       y = "density")
+
+
+```
+
+
+Why normal? The generative perspective:
+
+- Nature makes bell curves whenever it adds things together.
+
+- This dampens fluctuations - large fluctuations are cancelled out by small fluctuations.
+
+- Symmetry arises from the addition process.
+
+Inferential perspective:
+
+- If all you know are the mean and the variance, then the least surprising distribution is gaussian.
+
+>Note: if you just want mean or variance, a variable does not have to be normally distributed for the normal distribution to be useful 
+
+> Oh and go with the FLOW. This is hard, you won't understand everything, but keep flowing forward
+
+$~$
+
+## Weekly owl reminder
+
+1. State a clear question
+
+2. Sketch your causal assumptions
+
+3. Use the sketch to define generative model
+
+4. Use generative model to build estimator 
+
+5. **Profit** (real model)
+
+$~$
+
+## Time for some data: Kalahari heights
+
+$~$
+
+To get us started with linear regression, lets load in the Kalahari dataset from McElreath's `rethinking` package.
+
+```{r}
+library(rethinking)
+data(Howell1)
+Kalahari_data <- as_tibble(Howell1)
+```
+ 
+Now lets detach `rethinking`, we need to do this so `brms` always works
+
+```{r}
+rm(Howell1)
+detach(package:rethinking, unload = T)
+library(brms)
+```
+
+Right lets have a quick look at the data
+
+```{r}
+Kalahari_data
+```
+
+And we can check out how each variable is distributed like so:
+
+```{r}
+Kalahari_data %>% 
+  pivot_longer(everything()) %>% 
+  mutate(name = factor(name, levels = c("height", "weight", "age", "male"))) %>% 
+  
+  ggplot(aes(x = value)) +
+  geom_histogram(bins = 10) +
+  facet_wrap(~ name, scales = "free", ncol = 1)
+```
+
+**The owl**
+
+**1. In this lecture we are going to focus on describing the association between height and weight in adults.**
+
+**2. Scientific model: how does height affect weight?**
+
+Height influences weight, but not the other way around. Height is causal.
+
+$W = f(H)$ this means that weight is some function of height.
+
+```{r}
+dagify( W ~ H + U,  
+        coords = tibble(name = c("H", "W", "U"),
+                         x = c(1, 2, 3),
+                         y = c(1, 1, 1))) %>% 
+  gg_simple_dag()
+```
+
+Note the $U$ in the DAG - an unobserved influence on weight.
+
+### Build a generative model
+
+$W = \beta H + U$
+
+Lets simulate the data
+
+```{r}
+sim_weight <- function(H, b, sd){
+  U <- rnorm(length(H), 0, sd)
+  W <- b*H + U
+  return(W)
+}
+
+```
+
+Run the simulation and plot. We'll need values for heights, a $\beta$ value and some value of sd for weight in kgs 
+
+```{r}
+sim_data <- tibble(H = runif(200, min = 130, max = 170)) %>% 
+  mutate(W = sim_weight(H, b = 0.5, sd = 5))
+
+# plot
+
+sim_data %>% 
+  ggplot(aes(x = H, y = W)) +
+   geom_point(color = "salmon", shape = 1.5, stroke =2.5, size = 3, alpha = 0.9) +
+  theme_classic() +
+  labs(x = "Height (cm)", y = "Weight (kgs)") +
+  theme(text = element_text(size = 16))
+```
+
+**Describing our model**
+
+$W_{i} = \beta H_{i} + U_i$ is our equation for expected weight
+
+$U_{i} = Normal(0,\sigma)$ is the Gaussian error with sd $\sigma$
+
+$H_{i} =$ Uniform$(130, 170)$ means that all values are equally likely for height between 130-170
+
+$i$ is an index and here represents individuals in the dataset
+
+`=` indicates a deterministic relationship
+
+`~` indicates that something is "distributed as"
+
+$~$
+
+### Build estimator
+
+A linear model:
+
+$E(W_i|H_i) = \alpha + \beta H_{i}$
+
+$\alpha$ =  the intercept
+
+$\beta$ = the slope
+
+Our estimator:
+
+$W_{i}$ `~` $Normal(u_{i},\sigma)$
+
+$u_{i}$ `~` $\alpha + \beta H_{i}$ 
+
+In words: $W$ is distributed normally with mean that is a linear function of H
+
+### Priors
+
+We can specify these to be very helpful. We simply want to design priors to stop the model hallucinating impossible outcomes e.g. negative weights.
+
+Priors should express scientific knowledge, but softly. This is because the real process in nature is different to what we imagined and there needs to be room for this.
+
+Some basic things we know about weight:
+
+1. When height is zero, weight should be zero. 
+
+- $\alpha$ ~ Normal(0, 10) will achieve this
+
+2. Weight increases with height in humans on average. So $\beta$ should be positive
+
+3. Weight in kgs is less than height in cms, so $\beta$ should be less than 1
+
+- $\beta$ ~ Uniform(0, 1) will achieve this
+
+4. $\sigma$ must be positive
+
+- $\sigma$ ~ Uniform(0, 10) 
+
+Lets plot these priors
+
+```{r}
+
+n_lines <- 50
+
+tibble(n = 1:n_lines,
+       a = rnorm(n_lines, 0, 10),
+       b = runif(n_lines, 0, 1)) %>% 
+  expand(nesting(n, a, b), height = 130:170) %>% 
+  mutate(weight = a + b * (height)) %>%
+  
+  # plot
+  ggplot(aes(x = height, y = weight, group = n)) +
+  geom_line(alpha = 1/1.5, linewidth = 1, colour = met.brewer("Hiroshige")[2]) +
+  scale_x_continuous(expand = c(0, 0)) +
+  coord_cartesian(ylim = c(0, 100),
+                  xlim = c(130, 170)) +
+  theme_classic()
+```
+
+Woah, ok the slope looks ok, but the intercept is wild.
+
+This is because we set a very high sd value for $\alpha$
+
+We can fix this, but for a problem like this, the data will overwhelm the prior.
+
+$~$
+
+### Back to the owl: brms time
+
+Lets validate our model
+
+Let simulate again with our `sim_weight()` function
+
+```{r}
+sim_data_100 <- 
+  tibble(H = runif(100, min = 130, max = 170)) %>% 
+  mutate(W = sim_weight(H, b = 0.5, sd = 5))
+```
+
+Fit the model
+
+```{r}
+weight_synthetic_model <-
+  brm(W ~ 1 + H,
+      family = gaussian,
+      data = sim_data_100,
+      prior = c(prior(normal(0, 10), class = Intercept),
+                prior(uniform(0, 1), class = b, lb = 0, ub = 1),
+                prior(uniform(0, 10), class = sigma, lb = 0, ub = 10)),
+      chains = 4, cores = 4, iter = 6000, warmup = 2000, seed = 1,
+      file = "fits/weight_synthetic_model")
+```
+
+Get the model summary
+
+```{r}
+weight_synthetic_model
+```
+
+Right so, H is close to 0.5 and sigma is very close to 4.91. These aren't perfect because we have a smallish sample and relatively wild priors.
+
+$~$
+
+**Step 5. Profit** (with the real data)
+
+Time to fit the actual model
+
+```{r}
+Kalahari_adults <-
+  Kalahari_data %>% 
+  filter(age > 18)
+
+weight_kalahari_model <-
+  brm(weight ~ 1 + height,
+      family = gaussian,
+      data = Kalahari_adults,
+      prior = c(prior(normal(0, 10), class = Intercept),
+                prior(uniform(0, 1), class = b, lb = 0, ub = 1),
+                prior(uniform(0, 10), class = sigma, lb = 0, ub = 10)),
+      chains = 4, cores = 4, iter = 6000, warmup = 2000, seed = 1,
+      file = "fits/weight_kalahari_model")
+
+weight_kalahari_model
+
+```
+
+$~$
+
+### OBEY THE LAW
+
+$~$
+
+Law 1. Parameters are not independent of one another and cannot always be interpreted independently. They all act simultaneously on predictors (think about this from the context of the `fitted()` function).
+
+Instead we can push out posterior predictions from the model and describe/interpret those.
+
+1. Plot the sample
+
+2. Plot the posterior mean
+
+3. Plot the uncertainty of the mean
+
+4. Plot the uncertainty of predictions
+
+```{r}
+ 
+# use fitted to get posterior predictions
+
+height_seq <- 
+  tibble(height = 135:180) %>% 
+  mutate(height_standard = height - mean(Kalahari_adults$height))
+
+# add uncertainty intervals
+
+mu_summary <-
+  fitted(weight_kalahari_model,
+         newdata = height_seq) %>%
+  as_tibble() %>%
+  bind_cols(height_seq)
+
+# add prediction intervals
+
+pred_weight <-
+  predict(weight_kalahari_model,
+          newdata = height_seq) %>%
+  as_tibble() %>%
+  bind_cols(height_seq)
+
+# make plot 
+
+Kalahari_adults %>%
+  ggplot(aes(x = height)) +
+   geom_ribbon(data = pred_weight, 
+              aes(ymin = Q2.5, ymax = Q97.5),
+              fill = "salmon", alpha = 0.5) +
+  geom_point(aes(y = weight), color = "salmon", shape = 1.5, stroke =2, size = 1.5, alpha = 0.9) +
+  geom_smooth(data = mu_summary,
+              aes(y = Estimate, ymin = Q2.5, ymax = Q97.5),
+              stat = "identity",
+              fill = "salmon", color = "black", alpha = 0.7, size = 1/2) +
+  coord_cartesian(xlim = range(Kalahari_adults$height)) +
+  labs(x = "Height (cm)", y = "Weight (kgs)") +
+  theme_classic() +
+  theme(panel.grid = element_blank())
+
+```
+
+This plot shows 1) the raw data, 2) the predicted relationship between height and weight with 3) 95% uncertainty intervals for the mean and 4) 95% prediction intervals for where data points are predicted to fall within.
+
+`Predict()` reports prediction intervals, which are simulations that are the joint consequence of both the mean and sigma, unlike the results of `fitted()`, which only reflect the mean.
+
+$~$
+
+
+
+
+
+

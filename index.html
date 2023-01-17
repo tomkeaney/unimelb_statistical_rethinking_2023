@@ -127,6 +127,19 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
   <li><a href="#an-infinite-number-of-possibilties" id="toc-an-infinite-number-of-possibilties" class="nav-link" data-scroll-target="#an-infinite-number-of-possibilties">An infinite number of possibilties</a></li>
   <li><a href="#from-posterior-to-prediction-brms-time" id="toc-from-posterior-to-prediction-brms-time" class="nav-link" data-scroll-target="#from-posterior-to-prediction-brms-time">From posterior to prediction (brms time)</a></li>
   </ul></li>
+  <li><a href="#lecture-3-geocentric-models" id="toc-lecture-3-geocentric-models" class="nav-link" data-scroll-target="#lecture-3-geocentric-models">Lecture 3: Geocentric models</a>
+  <ul class="collapse">
+  <li><a href="#what-are-linear-models" id="toc-what-are-linear-models" class="nav-link" data-scroll-target="#what-are-linear-models">What are linear models</a></li>
+  <li><a href="#weekly-owl-reminder" id="toc-weekly-owl-reminder" class="nav-link" data-scroll-target="#weekly-owl-reminder">Weekly owl reminder</a></li>
+  <li><a href="#time-for-some-data-kalahari-heights" id="toc-time-for-some-data-kalahari-heights" class="nav-link" data-scroll-target="#time-for-some-data-kalahari-heights">Time for some data: Kalahari heights</a>
+  <ul class="collapse">
+  <li><a href="#build-a-generative-model" id="toc-build-a-generative-model" class="nav-link" data-scroll-target="#build-a-generative-model">Build a generative model</a></li>
+  <li><a href="#build-estimator" id="toc-build-estimator" class="nav-link" data-scroll-target="#build-estimator">Build estimator</a></li>
+  <li><a href="#priors" id="toc-priors" class="nav-link" data-scroll-target="#priors">Priors</a></li>
+  <li><a href="#back-to-the-owl-brms-time" id="toc-back-to-the-owl-brms-time" class="nav-link" data-scroll-target="#back-to-the-owl-brms-time">Back to the owl: brms time</a></li>
+  <li><a href="#obey-the-law" id="toc-obey-the-law" class="nav-link" data-scroll-target="#obey-the-law">OBEY THE LAW</a></li>
+  </ul></li>
+  </ul></li>
   </ul>
 </nav>
 </div>
@@ -638,7 +651,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sim_globe</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-stdout">
-<pre><code>[1] "L" "W" "L" "W" "L" "W" "W" "W" "W"</code></pre>
+<pre><code>[1] "W" "W" "L" "W" "L" "W" "W" "W" "L"</code></pre>
 </div>
 </div>
 <p>Now lets test it on extreme settings</p>
@@ -660,7 +673,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sum</span>(<span class="fu">sim_globe</span>(<span class="at">p=</span><span class="fl">0.5</span>, <span class="at">N =</span> <span class="fl">1e4</span>) <span class="sc">==</span> <span class="st">"W"</span>) <span class="sc">/</span> <span class="fl">1e4</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-stdout">
-<pre><code>[1] 0.4998</code></pre>
+<pre><code>[1] 0.5049</code></pre>
 </div>
 </div>
 <p>Also looks good.</p>
@@ -692,9 +705,9 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
    poss  ways  post
   &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;
 1  0        0 0    
-2  0.25    27 0.021
-3  0.5    512 0.404
-4  0.75   729 0.575
+2  0.25    81 0.097
+3  0.5    512 0.612
+4  0.75   243 0.291
 5  1        0 0    </code></pre>
 </div>
 </div>
@@ -915,6 +928,482 @@ scale reduction factor on split chains (at convergence, Rhat = 1).</code></pre>
 <p><img src="index_files/figure-html/unnamed-chunk-22-1.png" class="img-fluid" width="672"></p>
 </div>
 </div>
+<p><span class="math inline">\(~\)</span></p>
+</section>
+</section>
+<section id="lecture-3-geocentric-models" class="level1">
+<h1>Lecture 3: Geocentric models</h1>
+<hr>
+<p><span class="math inline">\(~\)</span></p>
+<p>It is entirely possible for a completely false model to make very accurate predictions.</p>
+<p>Geocentrism is Mcelreath’s example: the idea that the planets orbit the earth and the model behind it can very accurately predict where Mars will be in the nights sky, including when it will be in retrograde (appearing to orbit in the opposite direction).</p>
+<p>However, just because a model allows us to make accurate predictions does not mean it is correct. We now know that the planets orbit the sun, and this more correct model can also explain mar’s apparent retrograde movement.</p>
+<p>The relevance of this anecdote is that prediction without explanation is thwart with danger, but at the same time models like the geocentric can be very helpful.</p>
+<p><strong>Linear regression</strong> is similar.</p>
+<ul>
+<li><p>They are often descriptively accurate but mechanistically wrong.</p></li>
+<li><p>Few things in nature are perfectly linear as is assumed.</p></li>
+<li><p>They are useful but we must remember their limits</p></li>
+</ul>
+<p><span class="math inline">\(~\)</span></p>
+<section id="what-are-linear-models" class="level2">
+<h2 class="anchored" data-anchor-id="what-are-linear-models">What are linear models</h2>
+<p><span class="math inline">\(~\)</span></p>
+<ul>
+<li><p>Simple statistical golems that model the mean and the variance of a variable. That’s it.</p></li>
+<li><p>The mean is sum weighted sum of other variables. As those variables change, the mean and variance changes.</p></li>
+<li><p>Anovas, Ancovas, t-tests are all linear models.</p></li>
+</ul>
+<p><strong>The normal distribution</strong></p>
+<ul>
+<li><p>Counts up all the ways the observations can happen given a set of assumptions.</p></li>
+<li><p>Given some mean and variance the normal distribution gives you the relative number of ways the data can appear.</p></li>
+</ul>
+<p>The normal distribution is the norm because:</p>
+<ul>
+<li><p>It is very common in nature.</p></li>
+<li><p>It’s easy to calculate</p></li>
+<li><p>Very conservative assumptions (spreads probability out more than any other distribution, reducing the risk of mistake, at the expense of accuracy)</p></li>
+</ul>
+<p>To understand why the normal distribution is so common consider a soccer pitch mid-line, and individuals flipping coins that dictate whether they should step to the left or the right.</p>
+<p>Many individuals remain close to the line, while a few move towards the extremes. Simply, there are more ways to get a difference of 0 than there is any other result. This creates a bell curve and summarises processes to mean and variance. The path of one individual is shaded black in the figure below.</p>
+<div class="cell">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb31"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a><span class="co"># lets simulate this scenario</span></span>
+<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">4</span>)</span>
+<span id="cb31-4"><a href="#cb31-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-5"><a href="#cb31-5" aria-hidden="true" tabindex="-1"></a>pos <span class="ot">&lt;-</span></span>
+<span id="cb31-6"><a href="#cb31-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">replicate</span>(<span class="dv">100</span>, <span class="fu">runif</span>(<span class="dv">16</span>, <span class="sc">-</span><span class="dv">1</span>, <span class="dv">1</span>)) <span class="sc">%&gt;%</span> <span class="co"># this is the sim</span></span>
+<span id="cb31-7"><a href="#cb31-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">as_tibble</span>() <span class="sc">%&gt;%</span></span>
+<span id="cb31-8"><a href="#cb31-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rbind</span>(<span class="dv">0</span>, .) <span class="sc">%&gt;%</span> <span class="co"># add a row of zeros above simulation results</span></span>
+<span id="cb31-9"><a href="#cb31-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">step =</span> <span class="dv">0</span><span class="sc">:</span><span class="dv">16</span>) <span class="sc">%&gt;%</span> <span class="co"># creates a step column</span></span>
+<span id="cb31-10"><a href="#cb31-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">gather</span>(key, value, <span class="sc">-</span>step) <span class="sc">%&gt;%</span> <span class="co"># convert data to long format</span></span>
+<span id="cb31-11"><a href="#cb31-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">person =</span> <span class="fu">rep</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">100</span>, <span class="at">each =</span> <span class="dv">17</span>)) <span class="sc">%&gt;%</span> <span class="co"># person IDs added</span></span>
+<span id="cb31-12"><a href="#cb31-12" aria-hidden="true" tabindex="-1"></a>  <span class="co"># the next lines allow us to make cumulative sums within each person</span></span>
+<span id="cb31-13"><a href="#cb31-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(person) <span class="sc">%&gt;%</span></span>
+<span id="cb31-14"><a href="#cb31-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">position =</span> <span class="fu">cumsum</span>(value)) <span class="sc">%&gt;%</span></span>
+<span id="cb31-15"><a href="#cb31-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ungroup</span>() <span class="co"># allows more data manipulation</span></span>
+<span id="cb31-16"><a href="#cb31-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-17"><a href="#cb31-17" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(<span class="at">data =</span> pos,</span>
+<span id="cb31-18"><a href="#cb31-18" aria-hidden="true" tabindex="-1"></a>       <span class="fu">aes</span>(<span class="at">x =</span> step, <span class="at">y =</span> position, <span class="at">group =</span> person)) <span class="sc">+</span></span>
+<span id="cb31-19"><a href="#cb31-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_vline</span>(<span class="at">xintercept =</span> <span class="fu">c</span>(<span class="dv">4</span>, <span class="dv">8</span>, <span class="dv">16</span>), <span class="at">linetype =</span> <span class="dv">2</span>) <span class="sc">+</span></span>
+<span id="cb31-20"><a href="#cb31-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>(<span class="fu">aes</span>(<span class="at">colour =</span> person <span class="sc">&lt;</span> <span class="dv">2</span>, <span class="at">alpha =</span> person <span class="sc">&lt;</span> <span class="dv">2</span>)) <span class="sc">+</span></span>
+<span id="cb31-21"><a href="#cb31-21" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_colour_manual</span>(<span class="at">values =</span> <span class="fu">c</span>(<span class="st">"skyblue3"</span>, <span class="st">"black"</span>)) <span class="sc">+</span></span>
+<span id="cb31-22"><a href="#cb31-22" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_alpha_manual</span>(<span class="at">values =</span> <span class="fu">c</span>(<span class="dv">1</span><span class="sc">/</span><span class="dv">5</span>, <span class="dv">1</span>)) <span class="sc">+</span></span>
+<span id="cb31-23"><a href="#cb31-23" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_x_continuous</span>(<span class="st">"step number"</span>, <span class="at">breaks =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">4</span>, <span class="dv">8</span>, <span class="dv">12</span>, <span class="dv">16</span>)) <span class="sc">+</span></span>
+<span id="cb31-24"><a href="#cb31-24" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>() <span class="sc">+</span></span>
+<span id="cb31-25"><a href="#cb31-25" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">legend.position =</span> <span class="st">"none"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<p><img src="index_files/figure-html/unnamed-chunk-23-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<p>The density plot for this scenario at step 16:</p>
+<div class="cell">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb32"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a><span class="co"># first find the sd</span></span>
+<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a>sd <span class="ot">&lt;-</span></span>
+<span id="cb32-4"><a href="#cb32-4" aria-hidden="true" tabindex="-1"></a>  pos <span class="sc">%&gt;%</span></span>
+<span id="cb32-5"><a href="#cb32-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(step <span class="sc">==</span> <span class="dv">16</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb32-6"><a href="#cb32-6" aria-hidden="true" tabindex="-1"></a>           <span class="fu">summarise</span>(<span class="at">sd =</span> <span class="fu">sd</span>(position))</span>
+<span id="cb32-7"><a href="#cb32-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-8"><a href="#cb32-8" aria-hidden="true" tabindex="-1"></a>pos <span class="sc">%&gt;%</span></span>
+<span id="cb32-9"><a href="#cb32-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(step <span class="sc">==</span> <span class="dv">16</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb32-10"><a href="#cb32-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> position)) <span class="sc">+</span></span>
+<span id="cb32-11"><a href="#cb32-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stat_function</span>(<span class="at">fun =</span> dnorm,</span>
+<span id="cb32-12"><a href="#cb32-12" aria-hidden="true" tabindex="-1"></a>                <span class="at">args =</span> <span class="fu">list</span>(<span class="at">mean =</span> <span class="dv">0</span>, <span class="at">sd =</span> <span class="fl">2.18</span>),</span>
+<span id="cb32-13"><a href="#cb32-13" aria-hidden="true" tabindex="-1"></a>                <span class="at">linetype =</span> <span class="dv">2</span>) <span class="sc">+</span></span>
+<span id="cb32-14"><a href="#cb32-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_density</span>(<span class="at">colour =</span> <span class="st">"transparent"</span>, <span class="at">fill =</span> <span class="st">"dodgerblue"</span>, <span class="at">alpha =</span> <span class="fl">0.5</span>) <span class="sc">+</span></span>
+<span id="cb32-15"><a href="#cb32-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">coord_cartesian</span>(<span class="at">xlim =</span> <span class="fu">c</span>(<span class="sc">-</span><span class="dv">6</span>, <span class="dv">6</span>)) <span class="sc">+</span></span>
+<span id="cb32-16"><a href="#cb32-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"16 steps"</span>,</span>
+<span id="cb32-17"><a href="#cb32-17" aria-hidden="true" tabindex="-1"></a>       <span class="at">y =</span> <span class="st">"density"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<p><img src="index_files/figure-html/unnamed-chunk-24-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<p>Why normal? The generative perspective:</p>
+<ul>
+<li><p>Nature makes bell curves whenever it adds things together.</p></li>
+<li><p>This dampens fluctuations - large fluctuations are cancelled out by small fluctuations.</p></li>
+<li><p>Symmetry arises from the addition process.</p></li>
+</ul>
+<p>Inferential perspective:</p>
+<ul>
+<li>If all you know are the mean and the variance, then the least surprising distribution is gaussian.</li>
+</ul>
+<blockquote class="blockquote">
+<p>Note: if you just want mean or variance, a variable does not have to be normally distributed for the normal distribution to be useful</p>
+</blockquote>
+<blockquote class="blockquote">
+<p>Oh and go with the FLOW. This is hard, you won’t understand everything, but keep flowing forward</p>
+</blockquote>
+<p><span class="math inline">\(~\)</span></p>
+</section>
+<section id="weekly-owl-reminder" class="level2">
+<h2 class="anchored" data-anchor-id="weekly-owl-reminder">Weekly owl reminder</h2>
+<ol type="1">
+<li><p>State a clear question</p></li>
+<li><p>Sketch your causal assumptions</p></li>
+<li><p>Use the sketch to define generative model</p></li>
+<li><p>Use generative model to build estimator</p></li>
+<li><p><strong>Profit</strong> (real model)</p></li>
+</ol>
+<p><span class="math inline">\(~\)</span></p>
+</section>
+<section id="time-for-some-data-kalahari-heights" class="level2">
+<h2 class="anchored" data-anchor-id="time-for-some-data-kalahari-heights">Time for some data: Kalahari heights</h2>
+<p><span class="math inline">\(~\)</span></p>
+<p>To get us started with linear regression, lets load in the Kalahari dataset from McElreath’s <code>rethinking</code> package.</p>
+<div class="cell">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb33"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(rethinking)</span>
+<span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a><span class="fu">data</span>(Howell1)</span>
+<span id="cb33-3"><a href="#cb33-3" aria-hidden="true" tabindex="-1"></a>Kalahari_data <span class="ot">&lt;-</span> <span class="fu">as_tibble</span>(Howell1)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
+<p>Now lets detach <code>rethinking</code>, we need to do this so <code>brms</code> always works</p>
+<div class="cell">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb34"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span>(Howell1)</span>
+<span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a><span class="fu">detach</span>(package<span class="sc">:</span>rethinking, <span class="at">unload =</span> T)</span>
+<span id="cb34-3"><a href="#cb34-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(brms)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
+<p>Right lets have a quick look at the data</p>
+<div class="cell">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb35"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a>Kalahari_data</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 544 × 4
+   height weight   age  male
+    &lt;dbl&gt;  &lt;dbl&gt; &lt;dbl&gt; &lt;int&gt;
+ 1   152.   47.8    63     1
+ 2   140.   36.5    63     0
+ 3   137.   31.9    65     0
+ 4   157.   53.0    41     1
+ 5   145.   41.3    51     0
+ 6   164.   63.0    35     1
+ 7   149.   38.2    32     0
+ 8   169.   55.5    27     1
+ 9   148.   34.9    19     0
+10   165.   54.5    54     1
+# … with 534 more rows</code></pre>
+</div>
+</div>
+<p>And we can check out how each variable is distributed like so:</p>
+<div class="cell">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb37"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a>Kalahari_data <span class="sc">%&gt;%</span> </span>
+<span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_longer</span>(<span class="fu">everything</span>()) <span class="sc">%&gt;%</span> </span>
+<span id="cb37-3"><a href="#cb37-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">name =</span> <span class="fu">factor</span>(name, <span class="at">levels =</span> <span class="fu">c</span>(<span class="st">"height"</span>, <span class="st">"weight"</span>, <span class="st">"age"</span>, <span class="st">"male"</span>))) <span class="sc">%&gt;%</span> </span>
+<span id="cb37-4"><a href="#cb37-4" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb37-5"><a href="#cb37-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> value)) <span class="sc">+</span></span>
+<span id="cb37-6"><a href="#cb37-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_histogram</span>(<span class="at">bins =</span> <span class="dv">10</span>) <span class="sc">+</span></span>
+<span id="cb37-7"><a href="#cb37-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">facet_wrap</span>(<span class="sc">~</span> name, <span class="at">scales =</span> <span class="st">"free"</span>, <span class="at">ncol =</span> <span class="dv">1</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<p><img src="index_files/figure-html/unnamed-chunk-28-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<p><strong>The owl</strong></p>
+<p><strong>1. In this lecture we are going to focus on describing the association between height and weight in adults.</strong></p>
+<p><strong>2. Scientific model: how does height affect weight?</strong></p>
+<p>Height influences weight, but not the other way around. Height is causal.</p>
+<p><span class="math inline">\(W = f(H)\)</span> this means that weight is some function of height.</p>
+<div class="cell">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb38"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a><span class="fu">dagify</span>( W <span class="sc">~</span> H <span class="sc">+</span> U,  </span>
+<span id="cb38-2"><a href="#cb38-2" aria-hidden="true" tabindex="-1"></a>        <span class="at">coords =</span> <span class="fu">tibble</span>(<span class="at">name =</span> <span class="fu">c</span>(<span class="st">"H"</span>, <span class="st">"W"</span>, <span class="st">"U"</span>),</span>
+<span id="cb38-3"><a href="#cb38-3" aria-hidden="true" tabindex="-1"></a>                         <span class="at">x =</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>),</span>
+<span id="cb38-4"><a href="#cb38-4" aria-hidden="true" tabindex="-1"></a>                         <span class="at">y =</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">1</span>))) <span class="sc">%&gt;%</span> </span>
+<span id="cb38-5"><a href="#cb38-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">gg_simple_dag</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<p><img src="index_files/figure-html/unnamed-chunk-29-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<p>Note the <span class="math inline">\(U\)</span> in the DAG - an unobserved influence on weight.</p>
+<section id="build-a-generative-model" class="level3">
+<h3 class="anchored" data-anchor-id="build-a-generative-model">Build a generative model</h3>
+<p><span class="math inline">\(W = \beta H + U\)</span></p>
+<p>Lets simulate the data</p>
+<div class="cell">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb39"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a>sim_weight <span class="ot">&lt;-</span> <span class="cf">function</span>(H, b, sd){</span>
+<span id="cb39-2"><a href="#cb39-2" aria-hidden="true" tabindex="-1"></a>  U <span class="ot">&lt;-</span> <span class="fu">rnorm</span>(<span class="fu">length</span>(H), <span class="dv">0</span>, sd)</span>
+<span id="cb39-3"><a href="#cb39-3" aria-hidden="true" tabindex="-1"></a>  W <span class="ot">&lt;-</span> b<span class="sc">*</span>H <span class="sc">+</span> U</span>
+<span id="cb39-4"><a href="#cb39-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">return</span>(W)</span>
+<span id="cb39-5"><a href="#cb39-5" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
+<p>Run the simulation and plot. We’ll need values for heights, a <span class="math inline">\(\beta\)</span> value and some value of sd for weight in kgs</p>
+<div class="cell">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb40"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a>sim_data <span class="ot">&lt;-</span> <span class="fu">tibble</span>(<span class="at">H =</span> <span class="fu">runif</span>(<span class="dv">200</span>, <span class="at">min =</span> <span class="dv">130</span>, <span class="at">max =</span> <span class="dv">170</span>)) <span class="sc">%&gt;%</span> </span>
+<span id="cb40-2"><a href="#cb40-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">W =</span> <span class="fu">sim_weight</span>(H, <span class="at">b =</span> <span class="fl">0.5</span>, <span class="at">sd =</span> <span class="dv">5</span>))</span>
+<span id="cb40-3"><a href="#cb40-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb40-4"><a href="#cb40-4" aria-hidden="true" tabindex="-1"></a><span class="co"># plot</span></span>
+<span id="cb40-5"><a href="#cb40-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb40-6"><a href="#cb40-6" aria-hidden="true" tabindex="-1"></a>sim_data <span class="sc">%&gt;%</span> </span>
+<span id="cb40-7"><a href="#cb40-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> H, <span class="at">y =</span> W)) <span class="sc">+</span></span>
+<span id="cb40-8"><a href="#cb40-8" aria-hidden="true" tabindex="-1"></a>   <span class="fu">geom_point</span>(<span class="at">color =</span> <span class="st">"salmon"</span>, <span class="at">shape =</span> <span class="fl">1.5</span>, <span class="at">stroke =</span><span class="fl">2.5</span>, <span class="at">size =</span> <span class="dv">3</span>, <span class="at">alpha =</span> <span class="fl">0.9</span>) <span class="sc">+</span></span>
+<span id="cb40-9"><a href="#cb40-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_classic</span>() <span class="sc">+</span></span>
+<span id="cb40-10"><a href="#cb40-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">"Height (cm)"</span>, <span class="at">y =</span> <span class="st">"Weight (kgs)"</span>) <span class="sc">+</span></span>
+<span id="cb40-11"><a href="#cb40-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">text =</span> <span class="fu">element_text</span>(<span class="at">size =</span> <span class="dv">16</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<p><img src="index_files/figure-html/unnamed-chunk-31-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<p><strong>Describing our model</strong></p>
+<p><span class="math inline">\(W_{i} = \beta H_{i} + U_i\)</span> is our equation for expected weight</p>
+<p><span class="math inline">\(U_{i} = Normal(0,\sigma)\)</span> is the Gaussian error with sd <span class="math inline">\(\sigma\)</span></p>
+<p><span class="math inline">\(H_{i} =\)</span> Uniform<span class="math inline">\((130, 170)\)</span> means that all values are equally likely for height between 130-170</p>
+<p><span class="math inline">\(i\)</span> is an index and here represents individuals in the dataset</p>
+<p><code>=</code> indicates a deterministic relationship</p>
+<p><code>~</code> indicates that something is “distributed as”</p>
+<p><span class="math inline">\(~\)</span></p>
+</section>
+<section id="build-estimator" class="level3">
+<h3 class="anchored" data-anchor-id="build-estimator">Build estimator</h3>
+<p>A linear model:</p>
+<p><span class="math inline">\(E(W_i|H_i) = \alpha + \beta H_{i}\)</span></p>
+<p><span class="math inline">\(\alpha\)</span> = the intercept</p>
+<p><span class="math inline">\(\beta\)</span> = the slope</p>
+<p>Our estimator:</p>
+<p><span class="math inline">\(W_{i}\)</span> <code>~</code> <span class="math inline">\(Normal(u_{i},\sigma)\)</span></p>
+<p><span class="math inline">\(u_{i}\)</span> <code>~</code> <span class="math inline">\(\alpha + \beta H_{i}\)</span></p>
+<p>In words: <span class="math inline">\(W\)</span> is distributed normally with mean that is a linear function of H</p>
+</section>
+<section id="priors" class="level3">
+<h3 class="anchored" data-anchor-id="priors">Priors</h3>
+<p>We can specify these to be very helpful. We simply want to design priors to stop the model hallucinating impossible outcomes e.g.&nbsp;negative weights.</p>
+<p>Priors should express scientific knowledge, but softly. This is because the real process in nature is different to what we imagined and there needs to be room for this.</p>
+<p>Some basic things we know about weight:</p>
+<ol type="1">
+<li>When height is zero, weight should be zero.</li>
+</ol>
+<ul>
+<li><span class="math inline">\(\alpha\)</span> ~ Normal(0, 10) will achieve this</li>
+</ul>
+<ol start="2" type="1">
+<li><p>Weight increases with height in humans on average. So <span class="math inline">\(\beta\)</span> should be positive</p></li>
+<li><p>Weight in kgs is less than height in cms, so <span class="math inline">\(\beta\)</span> should be less than 1</p></li>
+</ol>
+<ul>
+<li><span class="math inline">\(\beta\)</span> ~ Uniform(0, 1) will achieve this</li>
+</ul>
+<ol start="4" type="1">
+<li><span class="math inline">\(\sigma\)</span> must be positive</li>
+</ol>
+<ul>
+<li><span class="math inline">\(\sigma\)</span> ~ Uniform(0, 10)</li>
+</ul>
+<p>Lets plot these priors</p>
+<div class="cell">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb41"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a>n_lines <span class="ot">&lt;-</span> <span class="dv">50</span></span>
+<span id="cb41-2"><a href="#cb41-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb41-3"><a href="#cb41-3" aria-hidden="true" tabindex="-1"></a><span class="fu">tibble</span>(<span class="at">n =</span> <span class="dv">1</span><span class="sc">:</span>n_lines,</span>
+<span id="cb41-4"><a href="#cb41-4" aria-hidden="true" tabindex="-1"></a>       <span class="at">a =</span> <span class="fu">rnorm</span>(n_lines, <span class="dv">0</span>, <span class="dv">10</span>),</span>
+<span id="cb41-5"><a href="#cb41-5" aria-hidden="true" tabindex="-1"></a>       <span class="at">b =</span> <span class="fu">runif</span>(n_lines, <span class="dv">0</span>, <span class="dv">1</span>)) <span class="sc">%&gt;%</span> </span>
+<span id="cb41-6"><a href="#cb41-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">expand</span>(<span class="fu">nesting</span>(n, a, b), <span class="at">height =</span> <span class="dv">130</span><span class="sc">:</span><span class="dv">170</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb41-7"><a href="#cb41-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">weight =</span> a <span class="sc">+</span> b <span class="sc">*</span> (height)) <span class="sc">%&gt;%</span></span>
+<span id="cb41-8"><a href="#cb41-8" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb41-9"><a href="#cb41-9" aria-hidden="true" tabindex="-1"></a>  <span class="co"># plot</span></span>
+<span id="cb41-10"><a href="#cb41-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> height, <span class="at">y =</span> weight, <span class="at">group =</span> n)) <span class="sc">+</span></span>
+<span id="cb41-11"><a href="#cb41-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>(<span class="at">alpha =</span> <span class="dv">1</span><span class="sc">/</span><span class="fl">1.5</span>, <span class="at">linewidth =</span> <span class="dv">1</span>, <span class="at">colour =</span> <span class="fu">met.brewer</span>(<span class="st">"Hiroshige"</span>)[<span class="dv">2</span>]) <span class="sc">+</span></span>
+<span id="cb41-12"><a href="#cb41-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_x_continuous</span>(<span class="at">expand =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">0</span>)) <span class="sc">+</span></span>
+<span id="cb41-13"><a href="#cb41-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">coord_cartesian</span>(<span class="at">ylim =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">100</span>),</span>
+<span id="cb41-14"><a href="#cb41-14" aria-hidden="true" tabindex="-1"></a>                  <span class="at">xlim =</span> <span class="fu">c</span>(<span class="dv">130</span>, <span class="dv">170</span>)) <span class="sc">+</span></span>
+<span id="cb41-15"><a href="#cb41-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_classic</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<p><img src="index_files/figure-html/unnamed-chunk-32-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<p>Woah, ok the slope looks ok, but the intercept is wild.</p>
+<p>This is because we set a very high sd value for <span class="math inline">\(\alpha\)</span></p>
+<p>We can fix this, but for a problem like this, the data will overwhelm the prior.</p>
+<p><span class="math inline">\(~\)</span></p>
+</section>
+<section id="back-to-the-owl-brms-time" class="level3">
+<h3 class="anchored" data-anchor-id="back-to-the-owl-brms-time">Back to the owl: brms time</h3>
+<p>Lets validate our model</p>
+<p>Let simulate again with our <code>sim_weight()</code> function</p>
+<div class="cell">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb42"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a>sim_data_100 <span class="ot">&lt;-</span> </span>
+<span id="cb42-2"><a href="#cb42-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tibble</span>(<span class="at">H =</span> <span class="fu">runif</span>(<span class="dv">100</span>, <span class="at">min =</span> <span class="dv">130</span>, <span class="at">max =</span> <span class="dv">170</span>)) <span class="sc">%&gt;%</span> </span>
+<span id="cb42-3"><a href="#cb42-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">W =</span> <span class="fu">sim_weight</span>(H, <span class="at">b =</span> <span class="fl">0.5</span>, <span class="at">sd =</span> <span class="dv">5</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
+<p>Fit the model</p>
+<div class="cell">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb43"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a>weight_synthetic_model <span class="ot">&lt;-</span></span>
+<span id="cb43-2"><a href="#cb43-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">brm</span>(W <span class="sc">~</span> <span class="dv">1</span> <span class="sc">+</span> H,</span>
+<span id="cb43-3"><a href="#cb43-3" aria-hidden="true" tabindex="-1"></a>      <span class="at">family =</span> gaussian,</span>
+<span id="cb43-4"><a href="#cb43-4" aria-hidden="true" tabindex="-1"></a>      <span class="at">data =</span> sim_data_100,</span>
+<span id="cb43-5"><a href="#cb43-5" aria-hidden="true" tabindex="-1"></a>      <span class="at">prior =</span> <span class="fu">c</span>(<span class="fu">prior</span>(<span class="fu">normal</span>(<span class="dv">0</span>, <span class="dv">10</span>), <span class="at">class =</span> Intercept),</span>
+<span id="cb43-6"><a href="#cb43-6" aria-hidden="true" tabindex="-1"></a>                <span class="fu">prior</span>(<span class="fu">uniform</span>(<span class="dv">0</span>, <span class="dv">1</span>), <span class="at">class =</span> b, <span class="at">lb =</span> <span class="dv">0</span>, <span class="at">ub =</span> <span class="dv">1</span>),</span>
+<span id="cb43-7"><a href="#cb43-7" aria-hidden="true" tabindex="-1"></a>                <span class="fu">prior</span>(<span class="fu">uniform</span>(<span class="dv">0</span>, <span class="dv">10</span>), <span class="at">class =</span> sigma, <span class="at">lb =</span> <span class="dv">0</span>, <span class="at">ub =</span> <span class="dv">10</span>)),</span>
+<span id="cb43-8"><a href="#cb43-8" aria-hidden="true" tabindex="-1"></a>      <span class="at">chains =</span> <span class="dv">4</span>, <span class="at">cores =</span> <span class="dv">4</span>, <span class="at">iter =</span> <span class="dv">6000</span>, <span class="at">warmup =</span> <span class="dv">2000</span>, <span class="at">seed =</span> <span class="dv">1</span>,</span>
+<span id="cb43-9"><a href="#cb43-9" aria-hidden="true" tabindex="-1"></a>      <span class="at">file =</span> <span class="st">"fits/weight_synthetic_model"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
+<p>Get the model summary</p>
+<div class="cell">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb44"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true" tabindex="-1"></a>weight_synthetic_model</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code> Family: gaussian 
+  Links: mu = identity; sigma = identity 
+Formula: W ~ 1 + H 
+   Data: sim_data_100 (Number of observations: 100) 
+  Draws: 4 chains, each with iter = 6000; warmup = 2000; thin = 1;
+         total post-warmup draws = 16000
+
+Population-Level Effects: 
+          Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+Intercept    12.28      6.51    -0.70    25.06 1.00    15740    11165
+H             0.42      0.04     0.34     0.51 1.00    15754    11351
+
+Family Specific Parameters: 
+      Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+sigma     4.91      0.35     4.28     5.67 1.00    14738    10608
+
+Draws were sampled using sampling(NUTS). For each parameter, Bulk_ESS
+and Tail_ESS are effective sample size measures, and Rhat is the potential
+scale reduction factor on split chains (at convergence, Rhat = 1).</code></pre>
+</div>
+</div>
+<p>Right so, H is close to 0.5 and sigma is very close to 4.91. These aren’t perfect because we have a smallish sample and relatively wild priors.</p>
+<p><span class="math inline">\(~\)</span></p>
+<p><strong>Step 5. Profit</strong> (with the real data)</p>
+<p>Time to fit the actual model</p>
+<div class="cell">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb46"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb46-1"><a href="#cb46-1" aria-hidden="true" tabindex="-1"></a>Kalahari_adults <span class="ot">&lt;-</span></span>
+<span id="cb46-2"><a href="#cb46-2" aria-hidden="true" tabindex="-1"></a>  Kalahari_data <span class="sc">%&gt;%</span> </span>
+<span id="cb46-3"><a href="#cb46-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(age <span class="sc">&gt;</span> <span class="dv">18</span>)</span>
+<span id="cb46-4"><a href="#cb46-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb46-5"><a href="#cb46-5" aria-hidden="true" tabindex="-1"></a>weight_kalahari_model <span class="ot">&lt;-</span></span>
+<span id="cb46-6"><a href="#cb46-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">brm</span>(weight <span class="sc">~</span> <span class="dv">1</span> <span class="sc">+</span> height,</span>
+<span id="cb46-7"><a href="#cb46-7" aria-hidden="true" tabindex="-1"></a>      <span class="at">family =</span> gaussian,</span>
+<span id="cb46-8"><a href="#cb46-8" aria-hidden="true" tabindex="-1"></a>      <span class="at">data =</span> Kalahari_adults,</span>
+<span id="cb46-9"><a href="#cb46-9" aria-hidden="true" tabindex="-1"></a>      <span class="at">prior =</span> <span class="fu">c</span>(<span class="fu">prior</span>(<span class="fu">normal</span>(<span class="dv">0</span>, <span class="dv">10</span>), <span class="at">class =</span> Intercept),</span>
+<span id="cb46-10"><a href="#cb46-10" aria-hidden="true" tabindex="-1"></a>                <span class="fu">prior</span>(<span class="fu">uniform</span>(<span class="dv">0</span>, <span class="dv">1</span>), <span class="at">class =</span> b, <span class="at">lb =</span> <span class="dv">0</span>, <span class="at">ub =</span> <span class="dv">1</span>),</span>
+<span id="cb46-11"><a href="#cb46-11" aria-hidden="true" tabindex="-1"></a>                <span class="fu">prior</span>(<span class="fu">uniform</span>(<span class="dv">0</span>, <span class="dv">10</span>), <span class="at">class =</span> sigma, <span class="at">lb =</span> <span class="dv">0</span>, <span class="at">ub =</span> <span class="dv">10</span>)),</span>
+<span id="cb46-12"><a href="#cb46-12" aria-hidden="true" tabindex="-1"></a>      <span class="at">chains =</span> <span class="dv">4</span>, <span class="at">cores =</span> <span class="dv">4</span>, <span class="at">iter =</span> <span class="dv">6000</span>, <span class="at">warmup =</span> <span class="dv">2000</span>, <span class="at">seed =</span> <span class="dv">1</span>,</span>
+<span id="cb46-13"><a href="#cb46-13" aria-hidden="true" tabindex="-1"></a>      <span class="at">file =</span> <span class="st">"fits/weight_kalahari_model"</span>)</span>
+<span id="cb46-14"><a href="#cb46-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb46-15"><a href="#cb46-15" aria-hidden="true" tabindex="-1"></a>weight_kalahari_model</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code> Family: gaussian 
+  Links: mu = identity; sigma = identity 
+Formula: weight ~ 1 + height 
+   Data: Kalahari_adults (Number of observations: 346) 
+  Draws: 4 chains, each with iter = 6000; warmup = 2000; thin = 1;
+         total post-warmup draws = 16000
+
+Population-Level Effects: 
+          Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+Intercept   -51.66      4.55   -60.54   -42.77 1.00    16472    11740
+height        0.63      0.03     0.57     0.68 1.00    16478    11912
+
+Family Specific Parameters: 
+      Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+sigma     4.27      0.16     3.97     4.60 1.00    15291    11571
+
+Draws were sampled using sampling(NUTS). For each parameter, Bulk_ESS
+and Tail_ESS are effective sample size measures, and Rhat is the potential
+scale reduction factor on split chains (at convergence, Rhat = 1).</code></pre>
+</div>
+</div>
+<p><span class="math inline">\(~\)</span></p>
+</section>
+<section id="obey-the-law" class="level3">
+<h3 class="anchored" data-anchor-id="obey-the-law">OBEY THE LAW</h3>
+<p><span class="math inline">\(~\)</span></p>
+<p>Law 1. Parameters are not independent of one another and cannot always be interpreted independently. They all act simultaneously on predictors (think about this from the context of the <code>fitted()</code> function).</p>
+<p>Instead we can push out posterior predictions from the model and describe/interpret those.</p>
+<ol type="1">
+<li><p>Plot the sample</p></li>
+<li><p>Plot the posterior mean</p></li>
+<li><p>Plot the uncertainty of the mean</p></li>
+<li><p>Plot the uncertainty of predictions</p></li>
+</ol>
+<div class="cell">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb48"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb48-1"><a href="#cb48-1" aria-hidden="true" tabindex="-1"></a><span class="co"># use fitted to get posterior predictions</span></span>
+<span id="cb48-2"><a href="#cb48-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb48-3"><a href="#cb48-3" aria-hidden="true" tabindex="-1"></a>height_seq <span class="ot">&lt;-</span> </span>
+<span id="cb48-4"><a href="#cb48-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tibble</span>(<span class="at">height =</span> <span class="dv">135</span><span class="sc">:</span><span class="dv">180</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb48-5"><a href="#cb48-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">height_standard =</span> height <span class="sc">-</span> <span class="fu">mean</span>(Kalahari_adults<span class="sc">$</span>height))</span>
+<span id="cb48-6"><a href="#cb48-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb48-7"><a href="#cb48-7" aria-hidden="true" tabindex="-1"></a><span class="co"># add uncertainty intervals</span></span>
+<span id="cb48-8"><a href="#cb48-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb48-9"><a href="#cb48-9" aria-hidden="true" tabindex="-1"></a>mu_summary <span class="ot">&lt;-</span></span>
+<span id="cb48-10"><a href="#cb48-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">fitted</span>(weight_kalahari_model,</span>
+<span id="cb48-11"><a href="#cb48-11" aria-hidden="true" tabindex="-1"></a>         <span class="at">newdata =</span> height_seq) <span class="sc">%&gt;%</span></span>
+<span id="cb48-12"><a href="#cb48-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">as_tibble</span>() <span class="sc">%&gt;%</span></span>
+<span id="cb48-13"><a href="#cb48-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">bind_cols</span>(height_seq)</span>
+<span id="cb48-14"><a href="#cb48-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb48-15"><a href="#cb48-15" aria-hidden="true" tabindex="-1"></a><span class="co"># add prediction intervals</span></span>
+<span id="cb48-16"><a href="#cb48-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb48-17"><a href="#cb48-17" aria-hidden="true" tabindex="-1"></a>pred_weight <span class="ot">&lt;-</span></span>
+<span id="cb48-18"><a href="#cb48-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">predict</span>(weight_kalahari_model,</span>
+<span id="cb48-19"><a href="#cb48-19" aria-hidden="true" tabindex="-1"></a>          <span class="at">newdata =</span> height_seq) <span class="sc">%&gt;%</span></span>
+<span id="cb48-20"><a href="#cb48-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">as_tibble</span>() <span class="sc">%&gt;%</span></span>
+<span id="cb48-21"><a href="#cb48-21" aria-hidden="true" tabindex="-1"></a>  <span class="fu">bind_cols</span>(height_seq)</span>
+<span id="cb48-22"><a href="#cb48-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb48-23"><a href="#cb48-23" aria-hidden="true" tabindex="-1"></a><span class="co"># make plot </span></span>
+<span id="cb48-24"><a href="#cb48-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb48-25"><a href="#cb48-25" aria-hidden="true" tabindex="-1"></a>Kalahari_adults <span class="sc">%&gt;%</span></span>
+<span id="cb48-26"><a href="#cb48-26" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> height)) <span class="sc">+</span></span>
+<span id="cb48-27"><a href="#cb48-27" aria-hidden="true" tabindex="-1"></a>   <span class="fu">geom_ribbon</span>(<span class="at">data =</span> pred_weight, </span>
+<span id="cb48-28"><a href="#cb48-28" aria-hidden="true" tabindex="-1"></a>              <span class="fu">aes</span>(<span class="at">ymin =</span> Q2<span class="fl">.5</span>, <span class="at">ymax =</span> Q97<span class="fl">.5</span>),</span>
+<span id="cb48-29"><a href="#cb48-29" aria-hidden="true" tabindex="-1"></a>              <span class="at">fill =</span> <span class="st">"salmon"</span>, <span class="at">alpha =</span> <span class="fl">0.5</span>) <span class="sc">+</span></span>
+<span id="cb48-30"><a href="#cb48-30" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="fu">aes</span>(<span class="at">y =</span> weight), <span class="at">color =</span> <span class="st">"salmon"</span>, <span class="at">shape =</span> <span class="fl">1.5</span>, <span class="at">stroke =</span><span class="dv">2</span>, <span class="at">size =</span> <span class="fl">1.5</span>, <span class="at">alpha =</span> <span class="fl">0.9</span>) <span class="sc">+</span></span>
+<span id="cb48-31"><a href="#cb48-31" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_smooth</span>(<span class="at">data =</span> mu_summary,</span>
+<span id="cb48-32"><a href="#cb48-32" aria-hidden="true" tabindex="-1"></a>              <span class="fu">aes</span>(<span class="at">y =</span> Estimate, <span class="at">ymin =</span> Q2<span class="fl">.5</span>, <span class="at">ymax =</span> Q97<span class="fl">.5</span>),</span>
+<span id="cb48-33"><a href="#cb48-33" aria-hidden="true" tabindex="-1"></a>              <span class="at">stat =</span> <span class="st">"identity"</span>,</span>
+<span id="cb48-34"><a href="#cb48-34" aria-hidden="true" tabindex="-1"></a>              <span class="at">fill =</span> <span class="st">"salmon"</span>, <span class="at">color =</span> <span class="st">"black"</span>, <span class="at">alpha =</span> <span class="fl">0.7</span>, <span class="at">size =</span> <span class="dv">1</span><span class="sc">/</span><span class="dv">2</span>) <span class="sc">+</span></span>
+<span id="cb48-35"><a href="#cb48-35" aria-hidden="true" tabindex="-1"></a>  <span class="fu">coord_cartesian</span>(<span class="at">xlim =</span> <span class="fu">range</span>(Kalahari_adults<span class="sc">$</span>height)) <span class="sc">+</span></span>
+<span id="cb48-36"><a href="#cb48-36" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">"Height (cm)"</span>, <span class="at">y =</span> <span class="st">"Weight (kgs)"</span>) <span class="sc">+</span></span>
+<span id="cb48-37"><a href="#cb48-37" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_classic</span>() <span class="sc">+</span></span>
+<span id="cb48-38"><a href="#cb48-38" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">panel.grid =</span> <span class="fu">element_blank</span>())</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<p><img src="index_files/figure-html/unnamed-chunk-37-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<p>This plot shows 1) the raw data, 2) the predicted relationship between height and weight with 3) 95% uncertainty intervals for the mean and 4) 95% prediction intervals for where data points are predicted to fall within.</p>
+<p><code>Predict()</code> reports prediction intervals, which are simulations that are the joint consequence of both the mean and sigma, unlike the results of <code>fitted()</code>, which only reflect the mean.</p>
+<p><span class="math inline">\(~\)</span></p>
+</section>
 </section>
 </section>
 
