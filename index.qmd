@@ -1101,8 +1101,557 @@ This plot shows 1) the raw data, 2) the predicted relationship between height an
 
 $~$
 
+# Lecture 4: Categories and Curves
+* * * *
+
+$~$
+
+## Categories
+
+Want to stratify by categories in our data. This means fitting a separate regression line for each category.
+
+Lets return to the Kalahari data. Now we'll add in a categorical variable - the sex of the individual.
+
+```{r}
+Kalahari_adults %>%
+  ggplot(aes(x = height, colour = as.factor(male))) +
+  geom_point(aes(y = weight), shape = 1.5, stroke =2, size = 2.5, alpha = 0.6) +
+  coord_cartesian(xlim = range(Kalahari_adults$height)) +
+  scale_colour_manual(values = c("salmon", "darkcyan")) +
+  labs(x = "Height (cm)", y = "Weight (kgs)") +
+  theme_classic() +
+  theme(panel.grid = element_blank(),
+        legend.position = "none")
+```
+
+Think scientifically first:
+
+How are height, sex and weight causally associated?
+
+How are height, sex and weight statistically related?
+
+Lets build a DAG:
+
+- First, we know that height causally effects weight. You can change your own weight without changing your height. However, as you get taller there is more of you, thus it is reasonable to expect height to affect weight.
+
+- We also know that sex influences height, but it is silly to say that height influences sex.
+
+- Third, if there is any influence we expect sex to influence weight not the other way around. Therefore weight may be influenced by both height and sex.
+
+Lets draw this DAG
+
+```{r}
+dagify(W ~ S + H,
+       H ~ S,
+       labels = c("W" = "Weight", 
+                  "H" = "Height",
+                  "S" = "Sex")) %>% 
+  gg_simple_dag()
+```
+
+This is a mediation graph. Note that effects do not stop at one variable, instead they continue on through the path. In that way sex has both a direct and indirect effect on weight. The indirect effect may be through height, which is 'contaminated' by sex.
+
+Statistically:
+
+$H = f_{H}(S)$
+
+$W = f_{W}(H, S)$
+
+Following our workflow lets simulate a more complex dataset, that this time includes separate sexes.
+
+To keep in line with the Kalahari data we'll code `females = 1` and `males = 2`
+
+```{r}
+sim_HW <- function(S, b, a){
+  N <- length(S)
+  H <- if_else(S == 1, 150, 160) + rnorm(N, 0, 5)
+  W <- a[S] + b[S]*H + rnorm(N, 0, 5)
+  tibble(S, H, W)
+}
+```
+
+Give it some data and run `sim_HW()`
+
+```{r}
+S <- rethinking::rbern(100) + 1
+
+(synthetic_data <- sim_HW(S, b = c(0.5, 0.6), a = c (0, 0)))
+```
+
+**Define the questions we're going to ask**:
+
+Different questions lead to a need for different stats models.
+
+Q: Causal effect of H on W?
+
+Q: Causal effect of S on W?
+
+Q: Direct effect of S on W?
+
+Each require different components of the DAG.
+
+**Drawing the categorical OWL**:
+
+There are several ways to code categorical variables
+
+1. Dummy or indicator variables
+    
+- Series of 0 1 variables that stand in for categories
+    
+2. Index variables
+
+- Assign an index value to each category
+    
+- Better for specifying priors
+    
+- Extend effortlessly to multi-level models
+    
+- What we will use
+
+$~$
+    
+**Q: What is the causal effect of S on W?**  
+
+$~$
+    
+Using index variables
+
+Estimating average weight:
+
+$W_{i} = Normal(\mu_{i}, \sigma)$
+
+$\mu_{i} = \alpha S[i]$ where $S[i]$ is the sex of the i-th person 
+
+S = 1 indicates female, S = 2 indicates male
+
+$\alpha = [\alpha_{i}, \alpha_{2}]$ this means there are two intercepts, one for each sex
+
+**Priors**
+
+$\alpha_{j} = Normal(60, 10)$
+
+All this says is that there is more than one value of \alpha (indicated by the subscript j) and that we want the prior to be the same for each of the values. Values correspond to the categories.
+
+We'll let the sample update the prior and tell us if sexual dimorphism exists
+
+Right ready to model. Not yet! More simulation. This might seem like overkill but it will help so much to get into this habit.
+
+We'll construct a female and male sample and look at the average difference. We'll only change sex.
+
+We'll find the difference between the sexes in our simulation (remember we coded a stronger effect of height on male weight than on female weight):
+
+```{r}
+# female sample
+
+S <- rep(1, 100)
+
+simF <- sim_HW(S, b = c(0.5, 0.6), a = c(0, 0))
+
+S <- rep(2, 100)
+
+simM <- sim_HW(S, b = c(0.5, 0.6), a = c(0, 0))
+
+# effect of Sex (male - female)
+
+mean(simM$W - simF$W)
+
+```
+
+Ok a difference of ~21kgs
+
+Now lets test the estimator.
+
+Note that we have specified a 0 intercept. In `brms` this will result in an output that produces a separate intercept for each categorical variable.
+
+```{r}
+synthetic_kalahari_sex_model <-
+  brm(data = synthetic_data,
+      W ~ 0 + as.factor(S),
+      prior = c(prior(normal(60, 10), class = b),
+                prior(exponential(1), class = sigma)),
+      iter = 2000, warmup = 1000, chains = 4, cores = 4,
+      seed = 1,
+      file = "fits/synthetic_kalahari_sex")
+
+synthetic_kalahari_sex_model
+```
+
+Again we find a difference between the sexes ~21kgs. Looks like our model tests what we want to test.
+
+Now lets use the real data
+
+```{r}
+# make the index variable to match McElreath's dataset
+
+Kalahari_adults <-
+  Kalahari_adults %>% 
+  mutate(Sex = if_else(male == "1", 2, 1),
+         Sex = as.factor(Sex))
+
+kalahari_sex_model <-
+  brm(data = Kalahari_adults,
+      weight ~ 0 + Sex,
+      prior = c(prior(normal(60, 10), class = b),
+                prior(exponential(1), class = sigma)),
+      iter = 2000, warmup = 1000, chains = 4, cores = 4,
+      seed = 1,
+      file = "fits/_kalahari_sex_model")
+```
+
+Find the contrasts and plot the average differences between women and men
+
+```{r}
+draws <- as_draws_df(kalahari_sex_model)
+
+as_draws_df(kalahari_sex_model) %>% 
+  mutate(`Mean weight contrast` = b_Sex2 - b_Sex1) %>% 
+  rename(Female = b_Sex1,
+         Male = b_Sex2) %>% 
+  pivot_longer(cols = c("Female", "Male", "Mean weight contrast")) %>% 
+  
+  ggplot(aes(x = value, y = 0)) +
+    stat_halfeye(.width = 0.95,
+                 normalize = "panels") +
+  scale_y_continuous(NULL, breaks = NULL) +
+  xlab("Posterior mean weights (kgs)") +
+  theme_bw() +
+  theme(panel.grid = element_blank()) +
+  facet_wrap(~ name, scales = "free")
+    
+```
+
+What about the posterior predictive distribution, not just the mean?
+
+```{r}
+Female_dist <- rnorm(1000, draws$b_Sex1, draws$sigma) %>% 
+  as_tibble() %>% 
+  rename(Female = value)
+
+Male_dist <- rnorm(1000, draws$b_Sex2, draws$sigma) %>% 
+  as_tibble() %>% 
+  rename(Male = value)
+
+plot_1 <-
+  cbind(Female_dist, Male_dist) %>% 
+  pivot_longer(cols = c("Female", "Male")) %>% 
+    
+  ggplot(aes(x = value, group = name, colour = name, fill = name)) +
+  geom_density(alpha = 0.8) +
+  scale_colour_manual(values = c("salmon", "darkcyan")) +
+  scale_fill_manual(values = c("salmon", "darkcyan")) +
+  xlab("Posterior predicted weights (kgs)") +
+  ylab("Density") +
+  theme_bw() +
+  theme(panel.grid = element_blank(),
+        legend.position = "none")
+ 
+
+plot_2 <- 
+cbind(Female_dist, Male_dist) %>%
+  as_tibble() %>% 
+  mutate(predictive_diff = Male - Female) %>% 
+  
+  ggplot(aes(x = predictive_diff, colour = "orange", fill = "orange")) +
+  stat_slab(aes(fill = after_stat(x > 0), colour = after_stat(x > 0)), alpha = 0.8) +
+  xlab("Posterior predictive weight difference (kgs)") +
+  ylab("Density") +
+  theme_bw() +
+  theme(panel.grid = element_blank(),
+        legend.position = "none")
+
+plot_1 / plot_2
+```
+
+The takeaway here is that there are lots of women that are heavier than men, even though the difference between the means is large.
+
+We need to calculate the contrast, or difference between the categories (as we have shown above).
+
+- It is never legitimate to compare overlap in parameters
+
+- What you do is compute the distribution of the difference (as shown above)
+
+$~$
+
+**Q: What is the direct causal effect of S on W?**
+
+$~$
+
+Now we must add Height into the model
+
+$W_{i} = Normal(\mu_{i}, \sigma)$
+
+$\mu_{i} = \alpha_{S[i]} + \beta_{S[i]}(H_{i} - \overline{H})$
+
+Now we have two intercepts and two slopes!
+
+**Centering**
+
+- Centering H makes it so that $\alpha$ is the average weight of a person with average height
+
+- Easy to fit priors for $alpha$
+
+- Linear regressions build lines that pass through this point (the grand mean)
+
+```{r}
+Kalahari_adults <-
+  Kalahari_adults %>%
+   mutate(height_standard = height - mean(height))
+```
+
+Lets model
+
+```{r}
+Kalahari_h_S_model <-
+  brm(data = Kalahari_adults,
+      weight ~ 0 + Sex + height_standard,
+      prior = c(#prior(normal(60, 10), class = a),
+                prior(lognormal(0, 1), class = b, lb = 0),
+                prior(exponential(1), class = sigma)),
+      iter = 4000, warmup = 2000, chains = 4, cores = 4,
+      seed = 1,
+      file = "fits/Kalahari_h_S_model")
+```
+
+I'm not sure how to make McElreath's plot here - he brilliantly finds the effect of sex at 50 different heights then plots. The best I can do is the overall effect of sex on weight after accounting for sex.
+
+The takeaway however, is that nearly all of the causal effect of sex acts through height.
+
+```{r}
+draws_2 <- as_draws_df(Kalahari_h_S_model) %>% 
+  mutate(weight_contrast = b_Sex2 - b_Sex1)
+
+Female_dist_2 <- rnorm(1000, draws_2$b_Sex1, draws_2$sigma) %>% 
+  as_tibble() %>% 
+  rename(Female = value)
+
+Male_dist_2 <- rnorm(1000, draws_2$b_Sex2, draws_2$sigma) %>% 
+  as_tibble() %>% 
+  rename(Male = value)
+
+plot_1 <-
+  cbind(Female_dist_2, Male_dist_2) %>% 
+  pivot_longer(cols = c("Female", "Male")) %>% 
+    
+  ggplot(aes(x = value, group = name, colour = name, fill = name)) +
+  geom_density(alpha = 0.8) +
+  scale_colour_manual(values = c("salmon", "darkcyan")) +
+  scale_fill_manual(values = c("salmon", "darkcyan")) +
+  xlab("Posterior predicted weights (kgs)\nafter accounting for the effect of height") +
+  ylab("Density") +
+  theme_bw() +
+  theme(panel.grid = element_blank(),
+        legend.position = "none")
+ 
+
+plot_2 <- 
+cbind(Female_dist, Male_dist) %>%
+  as_tibble() %>% 
+  mutate(predictive_diff = Male - Female) %>% 
+  
+  ggplot(aes(x = predictive_diff, colour = "orange", fill = "orange")) +
+  geom_density(alpha = 0.8) +
+  xlab("Posterior predictive weight difference (kgs)\nafter accounting for the effect of height") +
+  ylab("Density") +
+  theme_bw() +
+  theme(panel.grid = element_blank(),
+        legend.position = "none")
+
+plot_1 / plot_2
+  
+```
+
+$~$
+
+## Curves with lines
+
+$~$
+
+Many causal relationships are obviously not linear.
+
+Linear models can fit curves quite easily, but be wary that this is geocentric (not mechanistic).
+
+For example lets examine the full Kalahari dataset, which includes children.
+
+```{r}
+Kalahari_data %>%
+  ggplot(aes(x = height)) +
+  geom_point(aes(y = weight), colour = "salmon", shape = 1.5, stroke =2, size = 2.5, alpha = 0.6) +
+  coord_cartesian(xlim = range(Kalahari_data$height)) +
+  labs(x = "Height (cm)", y = "Weight (kgs)") +
+  theme_classic() +
+  theme(panel.grid = element_blank(),
+        legend.position = "none")
+```
+
+Two popular strategies
+
+- Polynomials
+
+- Splines and generalised additive models (nearly always better)
+
+$~$
+
+### Polynomials
+
+$~$
+
+$\mu_{i} = \alpha + \beta_{1}x_{i} + \beta_{2}x^2_{i}$
+
+Note the $x^{2}$, you can use higher and higher order terms and the model becomes more flexible.
+
+**Issues**
+
+- There is unhelpful asyymetry to polynomials. For example, for a second order term, the model believes the data creates a parabola and it's very hard to convince it otherwise.
+
+- The uncertainty at the edges of the data can be huge, making extrapolation and prediction very difficult.
+
+- There is no local smoothing so any data point can massively change the shape of a curve.
+
+For a second order term, the model believes the data creates a parabola and it's very hard to convince it otherwise.
+
+Fit the models with second and third order terms
 
 
+```{r}
+# First it is worth standardising height
+Kalahari_data <-
+Kalahari_data %>%
+  mutate(height_s = (height - mean(height)) / sd(height)) %>% 
+  mutate(height_s2 = height_s^2,
+         height_s3 = height_s^3)
 
+# fit quadratic model
 
+quadratic_kalahari <- 
+  brm(data = Kalahari_data, 
+      family = gaussian,
+      weight ~ 1 + height_s + height_s2,
+      prior = c(prior(normal(60, 10), class = Intercept),
+                prior(lognormal(0, 1), class = b, coef = "height_s"),
+                prior(normal(0, 1), class = b, coef = "height_s2"),
+                prior(uniform(0, 50), class = sigma)),
+      iter = 30000, warmup = 29000, chains = 4, cores = 4,
+      seed = 4,
+      file = "fits/quadratic_kalahari")
 
+# get predictions
+
+height_seq <- 
+  tibble(height_s = seq(from = -4, to = 4, length.out = 30)) %>% 
+  mutate(height_s2 = height_s^2)
+
+fitd_quad <-
+  fitted(quadratic_kalahari, 
+         newdata = height_seq) %>%
+  data.frame() %>%
+  bind_cols(height_seq)
+
+pred_quad <-
+  predict(quadratic_kalahari, 
+          newdata = height_seq) %>%
+  data.frame() %>%
+  bind_cols(height_seq) 
+
+p2 <-
+  ggplot(data = Kalahari_data, 
+       aes(x = height_s)) +
+  geom_ribbon(data = pred_quad, 
+              aes(ymin = Q2.5, ymax = Q97.5),
+              fill = "grey83") +
+  geom_smooth(data = fitd_quad,
+              aes(y = Estimate, ymin = Q2.5, ymax = Q97.5),
+              stat = "identity",
+              fill = "grey70", color = "black", alpha = 1, size = 1/2) +
+  geom_point(aes(y = weight),
+             color = "salmon", shape = 1.5, stroke =2, size = 2.5, alpha = 0.33) +
+  labs(y = "weight",
+       subtitle = "quadratic") +
+  coord_cartesian(xlim = range(-4, 4),
+                  ylim = range(0, 100)) +
+  theme(text = element_text(family = "Times"),
+        panel.grid = element_blank())
+
+# fit cubic model
+
+cubic_kalahari <- 
+  brm(data = Kalahari_data, 
+      family = gaussian,
+      weight ~ 1 + height_s + height_s2 + height_s3,
+      prior = c(prior(normal(60, 10), class = Intercept),
+                prior(lognormal(0, 1), class = b, coef = "height_s"),
+                prior(normal(0, 1), class = b, coef = "height_s2"),
+                prior(normal(0, 1), class = b, coef = "height_s3"),
+                prior(uniform(0, 50), class = sigma)),
+      iter = 40000, warmup = 39000, chains = 4, cores = 4,
+      seed = 4,
+      file = "fits/cubic_kalahari")
+
+# get predictions
+
+height_seq <- 
+  height_seq %>% 
+  mutate(height_s3 = height_s^3)
+
+fitd_cub <-
+  fitted(cubic_kalahari, 
+         newdata = height_seq) %>%
+  as_tibble() %>%
+  bind_cols(height_seq)
+
+pred_cub <-
+  predict(cubic_kalahari, 
+          newdata = height_seq) %>%
+  as_tibble() %>%
+  bind_cols(height_seq) 
+
+p3 <-
+  ggplot(data = Kalahari_data, 
+       aes(x = height_s)) +
+  geom_ribbon(data = pred_cub, 
+              aes(ymin = Q2.5, ymax = Q97.5),
+              fill = "grey83") +
+  geom_smooth(data = fitd_cub,
+              aes(y = Estimate, ymin = Q2.5, ymax = Q97.5),
+              stat = "identity",
+              fill = "grey70", color = "black", alpha = 1, size = 1/2) +
+  geom_point(aes(y = weight),
+             color = "salmon", shape = 1.5, stroke =2, size = 2.5, alpha = 0.33) +
+  labs(y = "weight",
+       subtitle = "cubic") +
+  coord_cartesian(xlim = range(-4, 4),
+                  ylim = range(0, 100)) +
+  theme(text = element_text(family = "Times"),
+        panel.grid = element_blank())
+
+p2 + p3
+```
+
+Note our use of the coef argument within our prior statements. Since $\beta_{1}$ and $\beta_{2}$ are both parameters of class = b within the `brms` set-up, we need to use the `coef` argument in cases when we want their priors to differ.
+
+At the left extreme, the model predicts that weight will increase as height decreases. This is because we have told the model the data is curved.
+
+$~$
+
+### Splines
+
+$~$
+
+A big family of functions designed to do local smoothing.
+
+This means that only the points within a region determine the shape of the function in that region. In polynomials the whole shape is affected by each data point. Results in splines being far more flexible than polynomials.
+
+Once again, they have no mechanistic reality.
+
+**What is a spline?**
+
+Used in drafting for architecture. They create wriggly lines.
+
+B-splines: regressions on synthetic variables
+
+$\mu_{i} = \alpha + w_{1}B_{i},1 + w_{2}B_{i},2 + w_{3}B_{i},3 +$
+
+$w$ = the weight parameter - like a slope, determine the importance of the different variables for the predicted mean. These can overlap somewhat.
+
+$B$ = the basis function - you make this - only have positive values in narrow regions of x-axis. They turn on weights in isolated regions of the x-axis.
+
+$~$
