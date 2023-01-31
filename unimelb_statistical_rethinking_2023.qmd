@@ -1,16 +1,6 @@
 ---
 title: "Statistical rethinking 2023 (brms examples)"
 subtitle: "Melbourne biosciences notes"
-execute: 
-  warning: false
-format: 
-  html:
-      theme: Minty
-      max-width: 1800px
-      toc: true
-      toc-location: left
-      code-fold: true
-      smooth-scroll: true
 ---
 
 # Load the packages required to run code
@@ -23,6 +13,7 @@ library(ggdag) # drawing dags
 library(tidybayes) # for bayesian data visualisation
 library(bayesplot) # more bayes data vis
 library(MetBrewer) # colours 
+library(ggrepel) # for nice text on ggplots
 ```
 
 
@@ -1655,3 +1646,50 @@ $w$ = the weight parameter - like a slope, determine the importance of the diffe
 $B$ = the basis function - you make this - only have positive values in narrow regions of x-axis. They turn on weights in isolated regions of the x-axis.
 
 $~$
+
+# Lecture 5: Elemental Confounds
+* * * *
+
+$~$
+
+Correlation in general is not surprising. In large data sets, every pair of variables has a statistically discernible non-zero correlation. But since most correlations do not indicate causal relationships, we need tools for distinguishing mere association from evidence of causation. This is why so much effort is devoted to multiple regression, using more than one predictor variable to simultaneously model an outcome.
+
+Waffle house causes divorce?
+
+```{r}
+data(WaffleDivorce, package = "rethinking") # this loads WaffleDivorce as a dataframe without loading rehtinking
+
+# Standarise as discussed below. We can use the rethinking package
+
+Waffle_data <-
+  WaffleDivorce %>% 
+  mutate(d = rethinking::standardize(Divorce),
+         m = rethinking::standardize(Marriage),
+         a = rethinking::standardize(MedianAgeMarriage))
+
+# time to plot
+
+Waffle_data %>%
+  ggplot(aes(x = WaffleHouses/Population, y = Divorce)) +
+  stat_smooth(method = "lm", fullrange = T, size = 1/2,
+              color = "firebrick4", fill = "firebrick", alpha = 1/5) +
+  geom_point(size = 2.5, color = "firebrick4", alpha = 1/2) +
+  geom_text_repel(data = Waffle_data %>% filter(Loc %in% c("ME", "OK", "AR", "AL", "GA", "SC", "NJ")),  
+                  aes(label = Loc), 
+                  size = 3, seed = 1042) +  # this makes it reproducible
+  scale_x_continuous("Waffle Houses per million", limits = c(0, 55)) +
+  ylab("Divorce rate") +
+  theme_bw() +
+  theme(panel.grid = element_blank())
+
+```
+
+There is a statistical association! But surely this isn't casual. We'll get back to this later.
+
+$~$
+
+## The four elemental confounds
+
+$~$
+
+Confounds: some feature of the sample and how we use it that misleads us. 

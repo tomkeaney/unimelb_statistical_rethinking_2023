@@ -1,0 +1,241 @@
+---
+title: "Simulating data and modelling it in brms"
+execute: 
+  warning: false
+format: 
+  html:
+      theme: Minty
+      max-width: 1800px
+      toc: true
+      toc-location: left
+      code-fold: true
+      smooth-scroll: true
+---
+
+## Load the packages we'll use today
+
+```{r}
+library(tidyverse) # for tidy style coding
+library(brms) # for bayesian models
+library(tidybayes) # for many helpful functions used to visualise distributions
+library(MetBrewer) # for pretty colours
+library(patchwork) # for combining plots
+```
+
+## Simulating data
+
+```{r}
+
+sim_growth_data_small <-
+  expand_grid(
+    Days = rep.int(1:100, 1),
+    Sex = c("Female", "Male")) %>% 
+  arrange(Sex) %>% 
+  mutate(Mass = if_else(Sex == "Female",
+                        Days * 0.2 + rnorm(100, 50, 5),
+                        Days * 0.3 + rnorm(100, 50, 5)))
+
+sim_growth_data_large <-
+  expand_grid(
+    Days = rep.int(1:100, 10),
+    Sex = c("Female", "Male")) %>% 
+  arrange(Days) %>% 
+  mutate(Mass = if_else(Sex == "Female",
+                        Days * 0.2 + rnorm(1000, 50, 5),
+                        Days * 0.3 + rnorm(1000, 50, 5)))
+
+
+```
+
+Plot them 
+
+```{r}
+p1 <-
+  sim_growth_data_small %>%
+  ggplot(aes(x = Days)) +
+  geom_point(aes(y = Mass, colour = Sex), shape = 1.5, stroke =2, size = 2.5, alpha = 0.9) +
+  scale_colour_manual(values = c(met.brewer(name = "Hokusai3")[1], met.brewer(name = "Hokusai3")[3])) +
+  labs(x = NULL, y = "Mass (grams)", subtitle = "One observation each day") +
+  theme_classic() +
+  theme(panel.grid = element_blank(),
+        text = element_text(size = 16))
+
+p2 <-
+  sim_growth_data_large %>%
+  ggplot(aes(x = Days)) +
+  geom_point(aes(y = Mass, colour = Sex), shape = 1.5, stroke =2, size = 2.5, alpha = 0.6) +
+  scale_colour_manual(values = c(met.brewer(name = "Hokusai3")[1], met.brewer(name = "Hokusai3")[3])) +
+  labs(x = "Days since hatching", y = "Mass (grams)", subtitle = "Ten observations each day") +
+  theme_classic() +
+  theme(panel.grid = element_blank(),
+        text = element_text(size = 16))
+
+p1 / p2
+```
+
+## Model with brms
+
+The core inputs to make the model run are `formula`, `family` and `data`.
+
+You can code them like this:
+
+`brm(Mass ~ 1 + Days, family = gaussian, data = sim_growth_data_small)`
+
+Next are your `priors`
+
+The `get_prior` function is very useful here. Let's try it out:
+
+```{r}
+get_prior(Mass ~ 1 + Days, family = gaussian, data = sim_growth_data_small)
+```
+
+This shows the `brms` defaults for all the priors that are neccessary to run this model. If you don't supply your own prior, `brms` will use its defaults.
+
+So we need priors for `b`, `Intercept` and `sigma`
+
+What do thes mean?
+
+- `b` is the effect that Days has on Mass. We know that things generally get bigger after hatching, so this must be positive.
+
+- `Intercept` is the value for mass when Days = 0. This also must be positive.
+
+- `sigma` is the variation in mass. This also must be > 0.
+
+To check out what a prior looks like I use this quick bit of code
+
+```{r}
+
+hist(rnorm(n = 1000, mean = 0, sd = 1))
+
+```
+
+**Now some modelling nitty gritty**
+
+We need to tell brms how many `iterations` to run the model for, how many of these iterations we wish to use as `warmup`, how many `chains` to run and how many of your computers `cores` you want to use.
+
+Finally, because these models can be slow (this one will be fast but it's good practice), you can use the `file` option to save the model output in your working directory and automatically load it whenever you rerun the code.
+
+Here is the full model:
+
+```{r}
+Our_mass_model_small <-
+  brm(Mass ~ 1 + Days,
+    family = gaussian,
+    data = sim_growth_data_small,
+    prior = c(prior(normal(50, 10), class = Intercept),
+              prior(lognormal(-1, 1), class = b, lb = 0),
+              prior(exponential(1), class = sigma)),
+    iter = 4000, warmup = 2000, chains = 4, cores = 4, seed = 1,
+    file = "fits/Our_mass_model_small_2")
+
+```
+
+You can view the model output easily
+
+```{r}
+Our_mass_model_small
+```
+
+
+Re-run on the bigger dataset
+
+```{r}
+Our_mass_model_large <-
+  brm(Mass ~ Days,
+    family = gaussian,
+    data = sim_growth_data_large,
+    prior = c(prior(normal(50, 10), class = Intercept),
+              prior(lognormal(-1, 1), class = b, lb = 0),
+              prior(exponential(1), class = sigma)),
+    iter = 4000, warmup = 2000, chains = 4, cores = 4,
+    file = "fits/Our_mass_model_large")
+```
+
+And view output
+
+```{r}
+Our_mass_model_large
+```
+
+
+## Plot the posterior
+
+Now we want to plot the model predictions - that is, for a given Day, what is the predicted mass of an individual?
+
+We can use two techniques, the easiest of which uses `fitted`
+
+First we need to create a new dataset with the combinations we want to predict from the model
+
+```{r}
+new_data <- sim_growth_data_small %>% distinct(Days)
+```
+
+Now lets fit the model predictions
+
+```{r}
+Model_predictions <-
+  fitted(Our_mass_model_small, newdata = new_data) %>% 
+  bind_cols(new_data)
+```
+
+Let's plot these
+
+```{r}
+p3 <-
+  ggplot(data = sim_growth_data_small, 
+         aes(x = Days)) +
+  geom_point(aes(y = Mass),
+             color = met.brewer(name = "Hokusai3")[4], shape = 1.5, stroke =2, size = 2.5, alpha = 0.9) +
+  geom_smooth(data = Model_predictions,
+              aes(y = Estimate, ymin = Q2.5, ymax = Q97.5),
+              stat = "identity",
+              fill = "grey70", color = "black", alpha = 1, size = 1/2) +
+  labs(y = "Mass") +
+  theme_classic() +
+  #coord_cartesian(xlim = range(-4, 4),
+  #               ylim = range(Kalahari_data$weight)) +
+  theme(text = element_text(size = 16),
+        panel.grid = element_blank())
+
+p3
+```
+
+What if we wanted to plot the distribution of the intercept?
+
+We could get the prediction from `fitted` when Days = 0 or we can use the `as_draws_df` function
+
+```{r}
+Our_mass_model_small %>% 
+  as_draws_df()
+```
+
+This gives us 2000 values for all the parameters estimated by the model - when plotted together these give us posterior distributions. Let's do so for the Intercept.
+
+```{r}
+p4 <- 
+  Our_mass_model_small %>% 
+  as_draws_df() %>% 
+
+  ggplot(aes(x = b_Intercept)) +
+    stat_halfeye(fill = met.brewer("Hokusai3")[2], .width = c(0.66, 0.95), alpha = 1,
+               point_interval = "mean_qi", point_fill = "white", 
+               shape = 21, point_size = 4, stroke = 1.5, scale = 0.8) +
+  labs(x= "Mass at day zero (the intercept)", y = NULL) +
+  theme_classic() + 
+  coord_cartesian(xlim = c(45, 55)) +
+  theme(panel.background = element_rect(fill='transparent'), #transparent panel bg
+        plot.background = element_rect(fill='transparent', color=NA), #transparent plot bg
+        panel.grid.minor.x = element_blank(),
+        legend.position = "none", #transparent legend panel
+        text = element_text(size=16))
+
+p4
+```
+
+Finally, we can combine the plot to make them look nice
+
+```{r}
+p3 + p4
+```
+
+

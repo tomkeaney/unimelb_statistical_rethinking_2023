@@ -1,0 +1,19 @@
+project:
+  title: "unimelb_statistical_rethinking_2023.qmd"
+  type: website
+  output-dir: docs
+
+execute:
+  warning: false
+
+format:
+  html:
+      theme: Minty
+      max-width: 1800px
+      toc: true
+      toc-location: left
+      code-fold: true
+      smooth-scroll: true
+
+
+
