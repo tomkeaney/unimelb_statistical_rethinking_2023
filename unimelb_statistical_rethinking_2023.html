@@ -148,7 +148,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
   </li>  
   <li class="nav-item">
     <a class="nav-link" href="./simulating_and_modelling.html">
- <span class="menu-text">Simulation example</span></a>
+ <span class="menu-text">Homework</span></a>
   </li>  
 </ul>
               <div id="quarto-search" class="" title="Search"></div>
@@ -752,7 +752,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sim_globe</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-stdout">
-<pre><code>[1] "W" "L" "L" "W" "W" "W" "W" "W" "W"</code></pre>
+<pre><code>[1] "W" "W" "L" "W" "W" "W" "L" "W" "L"</code></pre>
 </div>
 </div>
 <p>Now lets test it on extreme settings</p>
@@ -774,7 +774,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sum</span>(<span class="fu">sim_globe</span>(<span class="at">p=</span><span class="fl">0.5</span>, <span class="at">N =</span> <span class="fl">1e4</span>) <span class="sc">==</span> <span class="st">"W"</span>) <span class="sc">/</span> <span class="fl">1e4</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-stdout">
-<pre><code>[1] 0.5038</code></pre>
+<pre><code>[1] 0.5042</code></pre>
 </div>
 </div>
 <p>Also looks good.</p>
@@ -806,9 +806,9 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
    poss  ways  post
   &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;
 1  0        0 0    
-2  0.25    81 0.097
-3  0.5    512 0.612
-4  0.75   243 0.291
+2  0.25     9 0.003
+3  0.5    512 0.189
+4  0.75  2187 0.808
 5  1        0 0    </code></pre>
 </div>
 </div>
