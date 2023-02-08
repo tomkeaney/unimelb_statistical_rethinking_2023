@@ -14,6 +14,7 @@ library(tidybayes) # for bayesian data visualisation
 library(bayesplot) # more bayes data vis
 library(MetBrewer) # colours 
 library(ggrepel) # for nice text on ggplots
+library(loo) # for information criteria
 ```
 
 
@@ -1673,7 +1674,7 @@ Waffle_data %>%
   ggplot(aes(x = WaffleHouses/Population, y = Divorce)) +
   stat_smooth(method = "lm", fullrange = T, size = 1/2,
               color = "firebrick4", fill = "firebrick", alpha = 1/5) +
-  geom_point(size = 2.5, color = "firebrick4", alpha = 1/2) +
+  geom_point(size = 3.5, color = "firebrick4", alpha = 1/2) +
   geom_text_repel(data = Waffle_data %>% filter(Loc %in% c("ME", "OK", "AR", "AL", "GA", "SC", "NJ")),  
                   aes(label = Loc), 
                   size = 3, seed = 1042) +  # this makes it reproducible
@@ -1693,3 +1694,1865 @@ $~$
 $~$
 
 Confounds: some feature of the sample and how we use it that misleads us. 
+
+There are four major confounds:
+
+1. The fork
+
+2. The Pipe
+
+3. The Collider
+
+4. The Descendant
+
+```{r}
+
+
+d1 <- 
+  dagify(X ~ Z,
+         Y ~ Z,
+         coords = tibble(name = c("X", "Y", "Z"),
+                         x = c(1, 3, 2),
+                         y = c(2, 2, 1)))
+
+d2 <- 
+  dagify(Z ~ X,
+         Y ~ Z,
+         coords = tibble(name = c("X", "Y", "Z"),
+                         x = c(1, 3, 2),
+                         y = c(2, 1, 1.5)))
+
+d3 <- 
+  dagify(Z ~ X + Y,
+         coords = tibble(name = c("X", "Y", "Z"),
+                         x = c(1, 3, 2),
+                         y = c(1, 1, 2)))
+
+d4 <- 
+  dagify(Z ~ X + Y,
+         D ~ Z,
+         coords = tibble(name = c("X", "Y", "Z", "D"),
+                         x = c(1, 3, 2, 2),
+                         y = c(1, 1, 2, 1.05)))
+
+p1 <- gg_simple_dag(d1) + labs(subtitle = "The Fork")
+p2 <- gg_simple_dag(d2) + labs(subtitle = "The Pipe")
+p3 <- gg_simple_dag(d3) + labs(subtitle = "The Collider")
+p4 <- gg_simple_dag(d4) + labs(subtitle = "The Descendant")
+
+(p1 | p2 | p3 | p4) &
+  theme(plot.subtitle = element_text(hjust = 0.5)) &
+  plot_annotation(title = "The four elemental confounds")
+```
+
+$~$
+
+## The Fork
+
+$~$
+
+X and Y are associated because they share a common cause. However, this association disappears once we account for Z. That means that Y is independent of X once we account for Z.
+
+```{r}
+p1
+```
+
+Note that once we stratify for Z, the noise affecting X and Y can become independent.
+
+Let's simulate:
+
+```{r}
+n <- 1000
+
+tibble(Z = rbernoulli(n, 0.5)) %>% 
+  mutate(Z = if_else(Z == "TRUE", 1, 0),
+         X = rbernoulli(n, (1 - Z) * 0.1 + Z * 0.9),
+         Y = rbernoulli(n, (1 - Z)* 0.1 + Z * 0.9),
+         X = if_else(X == "TRUE", 1, 0),
+         Y = if_else(Y == "TRUE", 1, 0)) %>% 
+  count(X, Y)
+```
+
+See how this works? Our simulation specifies no relation between X and Y except through Z, but they are super positively correlated.
+
+Now for a continuous example
+
+```{r}
+
+n <- 300
+
+fork_sim_data <- 
+  tibble(Z = rbernoulli(n)) %>% 
+  mutate(Z = if_else(Z == "TRUE", 1, 0),
+         X = rnorm(n, 2*Z - 1),
+         Y = rnorm(n, 2 * Z -1)) 
+
+fork_sim_data %>%
+  ggplot(aes(X, Y)) +
+  geom_point(aes(colour = as.factor(Z)), shape = 1.5, stroke =2, size = 2.5, alpha = 0.8) +
+  geom_smooth(aes(colour = as.factor(Z)), method = "lm", se = FALSE, linewidth = 1.5) +
+  geom_smooth(colour = "black", method = "lm", se = FALSE) +
+  scale_colour_manual(values = c(met.brewer(name = "Hokusai3")[1], met.brewer(name = "Hokusai3")[3])) +
+  theme_classic() +
+  theme(panel.grid = element_blank(),
+        text = element_text(size = 16))
+```
+
+A data problem: **divorce rate** and **marriage rate**.
+
+```{r}
+Waffle_data %>%
+  ggplot(aes(x = Marriage, y = Divorce)) +
+  stat_smooth(method = "lm", fullrange = T, size = 1/2,
+              color = "firebrick4", fill = "firebrick", alpha = 1/5) +
+  geom_point(size = 3.5, color = "firebrick4", alpha = 1/2) +
+  #scale_x_continuous("Marriage rate", limits = c(22, 30)) +
+  ylab("Divorce rate") +
+  xlab("Marriage rate") +
+  theme_bw() +
+  theme(panel.grid = element_blank())
+```
+
+
+These two variables are correlated but is marriage rate causal of divorce rate?
+
+Hold on, but there are other things we need to consider.
+
+What else could affect divorce? Age at marriage certainly might. Lets plot:
+
+```{r}
+Waffle_data %>%
+  ggplot(aes(x = MedianAgeMarriage, y = Divorce)) +
+  stat_smooth(method = "lm", fullrange = T, size = 1/2,
+              color = "firebrick4", fill = "firebrick", alpha = 1/5) +
+  geom_point(size = 3, color = "firebrick4", alpha = 1/2) +
+  scale_x_continuous("Median age at marriage", limits = c(22, 30)) +
+  ylab("Divorce rate") +
+  theme_bw() +
+  theme(panel.grid = element_blank())
+```
+
+Lets account for this and build the DAG, considering that age of marriage could plausibly lead to more marriage.
+
+To estimate the direct effect of marriage, **you must break the fork** - that is stratify by the common cause - age at marriage.
+
+```{r}
+dag_coords <-
+  tibble(name = c("A", "M", "D"),
+         x    = c(1, 3, 2),
+         y    = c(2, 2, 1))
+
+p1 <-
+  dagify(M ~ A,
+         D ~ A + M,
+         coords = dag_coords) %>%
+  
+  gg_simple_dag()
+
+p1
+```
+
+2. Scientific model
+
+What does **stratify** mean:
+
+- It creates sub-populations - in a linear regression it does this:
+
+$D_{i} = Normal(\mu_{i}, \sigma)$
+
+$\mu_{i} = \alpha + \beta_{M}M_{i} + \beta_{A}A_{i}$
+
+That is, make the marriage variable intercept conditional upon age of marriage. To do this simply include it as a term.
+
+We can also stratify using interactions. But how we should do it depends on your casual situation.
+
+3. Statistical model
+
+$D_{i} = Normal(\mu_{i}, \sigma)$
+
+$\mu_{i} = \alpha + \beta_{M}M_{i} + \beta_{A}A_{i}$
+
+$\alpha = Normal(?, ?)$
+
+$\beta_{M} = Normal(?, ?)$
+
+$\beta_{A} = Normal(?, ?)$
+
+$\sigma = Exponential(?)$
+
+Before we talk about the exponential prior lets standardise the data (done above but explained here)
+
+**Why standardise**?
+
+To standardise subtract the mean and divide each value by the standard deviation. Variables become Z scores - values represent SDs from the mean. 0 is the mean.
+
+This makes computation more efficient.
+
+Priors are easier to choose because we have some understanding about effect size.
+
+Lets do some prior simulation, first with weak priors:
+
+$\alpha = Normal(0, 10)$
+
+$\beta_{M} = Normal(0, 10)$
+
+$\beta_{A} = Normal(0, 10)$
+
+$\sigma = Exponential(1)$
+
+These priors are **so broad they are essentially flat. This is a bad idea**. The reason is because almost all the probability mass is for insanely strong pos or neg relationships.
+
+The plot below shows the **stupidly steep slopes** these priors predict.
+
+```{r}
+# fit a model with bad priors
+
+Waffle_model_bad_priors <- 
+  brm(data = Waffle_data, 
+      family = gaussian,
+      d ~ 1 + a,
+      prior = c(prior(normal(0, 10), class = Intercept),
+                prior(normal(0, 10), class = b),
+                prior(exponential(1), class = sigma)),
+      iter = 2000, warmup = 1000, chains = 4, cores = 4,
+      seed = 5,
+      sample_prior = T,
+      file = "fits/Waffle_model_bad_priors")
+
+set.seed(5)
+
+prior_draws(Waffle_model_bad_priors) %>% 
+  slice_sample(n = 50) %>% 
+  rownames_to_column("draw") %>% 
+  expand(nesting(draw, Intercept, b),
+         a = c(-2, 2)) %>% 
+  mutate(d = Intercept + b * a) %>% 
+  
+  ggplot(aes(x = a, y = d)) +
+  geom_line(aes(group = draw),
+            color = "firebrick", alpha = .4) +
+  labs(x = "Median age marriage (std)",
+       y = "Divorce rate (std)") +
+  coord_cartesian(ylim = c(-2, 2)) +
+  theme_bw() +
+  theme(panel.grid = element_blank()) 
+```
+
+Better priors
+
+$\alpha = Normal(0, 0.2)$
+
+$\beta_{M} = Normal(0, 0.5)$
+
+$\beta_{A} = Normal(0, 0.5)$
+
+$\sigma = Exponential(1)$
+
+Re-sample
+
+```{r}
+Marriage_age_model <- 
+  brm(data = Waffle_data, 
+      family = gaussian,
+      d ~ 1 + a,
+      prior = c(prior(normal(0, 0.2), class = Intercept),
+                prior(normal(0, 0.5), class = b),
+                prior(exponential(1), class = sigma)),
+      iter = 2000, warmup = 1000, chains = 4, cores = 4,
+      seed = 5,
+      sample_prior = T,
+      file = "fits/Marriage_age_model")
+
+Marriage_age_model
+```
+
+Lets have a look at that plot again with our updated priors
+
+```{r}
+prior_draws(Marriage_age_model) %>% 
+  slice_sample(n = 50) %>% 
+  rownames_to_column("draw") %>% 
+  expand(nesting(draw, Intercept, b),
+         a = c(-2, 2)) %>% 
+  mutate(d = Intercept + b * a) %>% 
+  
+  ggplot(aes(x = a, y = d)) +
+  geom_line(aes(group = draw),
+            color = "firebrick", alpha = .4) +
+  labs(x = "Median age marriage (std)",
+       y = "Divorce rate (std)") +
+  coord_cartesian(ylim = c(-2, 2)) +
+  theme_bw() +
+  theme(panel.grid = element_blank()) 
+```
+
+Much better!
+
+Lets test for the causal effect of marriage, while closing the fork
+
+```{r}
+marriage_model <- 
+  brm(data = Waffle_data, 
+      family = gaussian,
+      d ~ 1 + m + a,
+      prior = c(prior(normal(0, 0.2), class = Intercept),
+                prior(normal(0, 0.5), class = b),
+                prior(exponential(1), class = sigma)),
+      iter = 2000, warmup = 1000, chains = 4, cores = 4,
+      seed = 5,
+      file = "fits/marriage_model")
+
+marriage_model
+
+```
+
+Ok the exponential distribution:
+
+- Constrained to be positive
+
+- Only info is average displacement from 0, hence the one value, also called the rate. 
+
+- A value of 1 means roughly 1 SD from 0
+
+- Great for sigma
+
+Lets look at the coefficients:
+
+```{r}
+mcmc_plot(marriage_model)
+```
+
+There is a very small effect of marriage, but we aren't sure if this very small effect is positive or negative. Essentially no causal effect on divorce.
+
+Age of marriage has a large negative effect though.
+
+$~$
+
+**Gold standard: simulating an intervention from the data**
+
+```{r}
+post <- as_draws_df(marriage_model)
+
+n <- 4000
+A <- sample(Waffle_data$a, size = n, replace = T)
+
+# simulate divorce for M = 0 
+bind_cols(
+post %>% 
+  mutate(m_0 = rnorm(n, b_Intercept + b_m * 0 + b_a * A, sigma)) %>% 
+  select(m_0),
+
+# now 1 sd above the mean
+
+post %>% 
+  mutate(m_1 = rnorm(n, b_Intercept + b_m * 1 + b_a * A, sigma)) %>% 
+  select(m_1)
+) %>% 
+  mutate(diff = m_1 - m_0) %>% 
+  
+  ggplot(aes(x = diff)) +
+  geom_density(fill = met.brewer("Hokusai2")[1]) +
+    labs(x = "Effect of 1 sd increase in M on D") +
+  #coord_cartesian(ylim = c(-2, 2)) +
+  theme_bw() +
+  theme(panel.grid = element_blank()) 
+  
+```
+
+$~$
+
+## The Pipe
+
+$~$
+
+Structurally different to the fork, but statistically handled similarly.
+
+In this case Z is a mediator variable. That is, the influence of X on Y is transmitted through Z.
+
+```{r}
+p2
+
+```
+
+Simulate to understand. Look carefully, **we don't code any effect of X on Y or vice-versa**.
+
+```{r}
+n <- 1000
+
+tibble(X = rbernoulli(n, 0.5)) %>% 
+  mutate(X = if_else(X == "TRUE", 1, 0),
+         Z = rbernoulli(n, (1 - X) * 0.1 + X * 0.9),
+         Y = rbernoulli(n, (1 - Z)* 0.1 + Z * 0.9),
+         Z = if_else(X == "TRUE", 1, 0),
+         Y = if_else(Y == "TRUE", 1, 0)) %>% 
+  count(X, Y)
+```
+
+Yet there appears to be an effect! This is because X effects Z which affects Y.
+
+An example: a plant growth experiment
+
+Create the data
+
+```{r}
+# how many plants would you like?
+n <- 100
+
+# h0 is the starting height
+# treatment is an antifungal
+# fungus is fungus presence
+# h1 is end of experiment plant height
+
+set.seed(71)
+
+plant_experiment <- 
+  tibble(h0        = rnorm(n, mean = 10, sd = 2), 
+         treatment = rep(0:1, each = n / 2),
+         fungus    = rbinom(n, size = 1, prob = .5 - treatment * 0.4),
+         h1        = h0 + rnorm(n, mean = 5 - 3 * fungus, sd = 1)) %>% 
+  mutate(treatment = as.factor(treatment),
+         fungus = as.factor(fungus))
+
+```
+
+There are 100 plants troubled by fungal growth. Half the plants receive anti-fungal treatments. We measure growth and presence of fungus.
+
+1. The estimand is the effect of anti-fungal treatment on growth.
+
+2. Scientific model:
+
+```{r}
+# define our coordinates
+dag_coords <-
+  tibble(name = c("H0", "T", "F", "H1"),
+         x    = c(1, 5, 4, 3),
+         y    = c(2, 2, 1.5, 1))
+
+# save our DAG
+dag <-
+  dagify(F ~ T,
+         H1 ~ H0 + F,
+         coords = dag_coords)
+
+# plot 
+dag %>%
+ gg_simple_dag()
+```
+
+This is a harder problem than it first appears
+
+The correct stats analysis here is to ignore the fungal status. This is because this will block the pipe! We remove the effect of the desired part of the experiment.
+
+See the model output
+
+```{r}
+fungal_model <- 
+  brm(data = plant_experiment, 
+      family = gaussian,
+      h1 ~ 0 + h0 + treatment + fungus,
+      prior = c(prior(normal(0, 0.5), class = b),
+                prior(exponential(1), class = sigma)),
+      iter = 2000, warmup = 1000, chains = 4, cores = 4,
+      seed = 5,
+      file = "fits/fungal_model")
+
+fungal_model
+```
+
+The treatment works through fungal growth, so if we account for fungal growth, of course we will find no effect. So the message is not to stratify by an effect of the treatment you're interested in.
+
+To prove this, lets fit the more logical model:
+
+```{r}
+fungal_model_causal <- 
+  brm(data = plant_experiment, 
+      family = gaussian,
+      h1 ~ 0 + h0 + treatment,
+      prior = c(prior(normal(0, 0.5), class = b),
+                prior(exponential(1), class = sigma)),
+      iter = 2000, warmup = 1000, chains = 4, cores = 4,
+      seed = 5,
+      file = "fits/fungal_model_causal")
+
+fungal_model_causal
+```
+
+You should be very wary of including consequences of your treatment other than the desired outcome variable because of the pipe.
+
+$~$
+
+## The Collider
+
+$~$
+
+
+```{r}
+p3
+```
+
+
+X and Y are not associated but both influence Z.
+
+If you stratify by Z, then X and Y become associated! How??
+
+If we learn the value of Z we have to learn something about X and Y. Still confused?
+
+
+An example: **Selection bias in grants**
+
+- There are 200 grant applications
+
+- Rated on trustworthiness and newsworthiness
+
+- These are uncorrelated variables
+
+Load in the data and plot the relationship
+
+```{r}
+set.seed(1914)
+n <- 200  # number of grant proposals
+p <- 0.1  # proportion to select
+
+grants <-
+  # uncorrelated newsworthiness and trustworthiness
+  tibble(newsworthiness  = rnorm(n, mean = 0, sd = 1),
+         trustworthiness = rnorm(n, mean = 0, sd = 1)) %>% 
+  # total_score
+  mutate(total_score = newsworthiness + trustworthiness) %>% 
+  # select top 10% of combined scores
+  mutate(selected = ifelse(total_score >= quantile(total_score, 1 - p), TRUE, FALSE))
+```
+
+```{r}
+
+# we'll need this for the annotation
+text <-
+  tibble(newsworthiness  = c(2, 1), 
+         trustworthiness = c(2.25, -2.5),
+         selected        = c(TRUE, FALSE),
+         label           = c("selected", "rejected"))
+
+grants %>% 
+  ggplot(aes(x = newsworthiness, y = trustworthiness, color = selected)) +
+  geom_point(aes(shape = selected), alpha = 3/4, stroke = 1.4) +
+  geom_text(data = text,
+            aes(label = label)) +
+  geom_smooth(data = . %>% filter(selected == TRUE),
+              method = "lm", fullrange = T,
+              color = "lightblue", se = F, size = 1/2) +
+  scale_color_manual(values = c("black", "lightblue")) +
+  scale_shape_manual(values = c(1, 19)) +
+  scale_x_continuous(limits = c(-3, 3.9), expand = c(0, 0)) +
+  coord_cartesian(ylim = range(grants$trustworthiness)) +
+  theme(legend.position = "none") +
+  theme_minimal()
+```
+
+After selection there is a strong negative correlation.
+
+Ok, so due to selection the only grants that make it are either high in newsworthiness or trustworthiness (makes sense). From a random distribution few grants will be high in both (this is much rarer than being high in one of the categories), The result is a subset of grants that are good at one thing but mainly bad at the other, which creates the appearance of a negative correlation across the entire sample. The key is to not subset the data (don't stratify)
+
+Example 2: selection bias in restaurants
+
+- Restaurants are successful because they have good food or because they're in a good location.
+
+- Only the bad restaurants in really good locations can survive.
+
+- Creates a negative relationship between food quality and location.
+
+Example 3: selection bias in actors
+
+- Actors can be successful because they are skilled or because they are good looking.
+
+- Really bad actors can survive if they are attractive - they end up being the only less skilled actors that can survive.
+
+- Selection creates a negative relationship between looks and skill.
+
+$~$
+
+**Stats example**: endogenous colliders
+
+If you condition on a collider, you create phantom non-causal associations.
+
+Example: **Does age influence happiness?**
+
+```{r}
+
+dag_coords <-
+  tibble(name = c("H", "M", "A"),
+         x    = 1:3,
+         y    = 1)
+
+dagify(M ~ H + A,
+       coords = dag_coords) %>%
+  gg_simple_dag()
+
+```
+
+1. The estimand: Age affects happiness
+
+This is possibly confounded by marital status.
+
+Suppose age has no effect on happiness but both affect marital status.
+
+So the collider scenario here is that of the married people, only a very advanced age can overcome unhapiness or a very happy dispoistion can overcome a very young age = a neg relationship
+
+Lets sim this to visualise how
+
+```{r}
+marriage_sim <- rethinking::sim_happiness(seed = 1977, N_years = 1000)
+
+marriage_sim %>% 
+  mutate(married = factor(married,
+                          labels = c("unmarried", "married"))) %>% 
+  
+  ggplot(aes(x = age, y = happiness, color = married)) +
+  geom_point(size = 1.75) +
+  scale_color_manual(NULL, values = c("grey85", "forestgreen")) +
+  scale_x_continuous(expand = c(.015, .015)) +
+  theme(panel.grid = element_blank()) +
+  theme_minimal()
+```
+
+If the visualisation isn't enough to convince you, lets fit the models.
+
+First with the collider 
+
+```{r}
+marriage_sim_2 <-
+  marriage_sim %>% 
+  mutate(mid = factor(married + 1, labels = c("single", "married"))) %>% 
+  # only inlcude those 18 and above
+  filter(age > 17) %>% 
+  # create a, a standarised variable where 18 = 0 and 65 = 1
+  mutate(a = (age - 18) / (65 - 18))
+
+marriage_happiness_model <- 
+  brm(data = marriage_sim_2, 
+      family = gaussian,
+      happiness ~ 0 + mid + a,
+      prior = c(prior(normal(0, 1), class = b, coef = midmarried),
+                prior(normal(0, 1), class = b, coef = midsingle),
+                prior(normal(0, 2), class = b, coef = a),
+                prior(exponential(1), class = sigma)),
+      iter = 2000, warmup = 1000, chains = 4, cores = 4,
+      seed = 6,
+      file = "fits/marriage_happiness_model")
+
+marriage_happiness_model
+```
+
+As we expected, age appears to be negatively associated with happiness.
+
+Now remove the collider
+
+```{r}
+marriage_happiness_model_causal <- 
+  brm(data = marriage_sim_2, 
+      family = gaussian,
+      happiness ~ 0 + a,
+      prior = c(prior(normal(0, 2), class = b, coef = a),
+                prior(exponential(1), class = sigma)),
+      iter = 2000, warmup = 1000, chains = 4, cores = 4,
+      seed = 6,
+      file = "fits/marriage_happiness_model_causal")
+
+marriage_happiness_model_causal
+```
+
+Age has literally no effect on happiness now, as we specified in the simulation.
+
+$~$
+
+## The Descendant
+
+$~$
+
+```{r}
+d4 <- 
+  dagify(Z ~ X + Y,
+         D ~ Z,
+         coords = tibble(name = c("X", "Y", "Z", "D"),
+                                x = c(1, 3, 2, 2),
+                                  y = c(1, 1, 2, 1.05))
+         )
+
+p4 <- gg_simple_dag(d4) + labs(subtitle = "The Descendant")
+
+p4
+```
+
+The variable A is the descendant of the Z variable.
+
+The consequence is if we condition (stratify) by A it will have the same effect as conditioning by Z. While A does not affect X or Y, it is related to Z so it has a weaker (depending on the A -> association strength) but tangible effect on X/Y.
+
+Think about how common descendants are. Any proxy is a descendant! 
+
+E.g. all fitness measures are proxies and therefore descendants of true fitness.
+
+$~$
+
+# Lecture 6: Do calculus and good and bad controls
+
+$~$
+
+## Unobserved confounds
+
+$~$
+
+Suppose we are interested in the direct effect of grandparents education on their grandchildrens education.
+
+- They will have direct and indirect effects on these kids
+
+Estimand: Direct effect of grandparents G on children C.
+
+But parent education is obviously an issue here.
+
+```{r}
+dag_coords <-
+  tibble(name = c("G", "P", "C", "U"),
+         x    = c(1, 2, 2, 3),
+         y    = c(2, 2, 1, 1.5))
+
+dagify(P ~ G + U,
+       C ~ P + G + U,
+       coords = dag_coords) %>%
+  gg_simple_dag()
+```
+
+The parental effect is likely confounded with living conditions. However, this might not be the case for grandparents who live in a different area.
+
+Remember what our goal is: estimate the direct causal effect of grandparents.
+
+If the situation was this:
+
+```{r}
+dagify(P ~ G,
+       C ~ P + G,
+       coords = dag_coords) %>%
+  gg_simple_dag()
+```
+
+Then we would just have to stratify by P to block the pipe and find the direct effect of G.
+
+Unfortunately, U exists, which makes P a collider! So this makes P potentially associated with C because U affects them both. 
+
+We are left with only bad choices. Sometimes this is the way it is.
+
+Why does collider bias happen: continuing with the parental example.
+
+Let's simulate the data, with G having no causal effect on C.
+
+```{r}
+# how many grandparent-parent-child triads would you like?
+n    <- 200 
+
+b_gp <- 1  # direct effect of G on P
+b_gc <- 0  # direct effect of G on C
+b_pc <- 1  # direct effect of P on C
+b_u  <- 2  # direct effect of U on P and C
+
+# simulate triads
+set.seed(1)
+
+d <-
+  tibble(u = 2 * rbinom(n, size = 1, prob = .5) - 1,
+         g = rnorm(n, mean = 0, sd = 1)) %>% 
+  mutate(p = rnorm(n, mean = b_gp * g + b_u * u, sd = 1)) %>% 
+  mutate(c = rnorm(n, mean = b_pc * p + b_gc * g + b_u * u, sd = 1))
+```
+
+Now we'll fit the model without U - which closes the pipe but opens the collider.
+
+```{r}
+parent_collider_model <- 
+  brm(data = d, 
+      family = gaussian,
+      c ~ 0 + Intercept + p + g,
+      prior = c(prior(normal(0, 1), class = b),
+                prior(exponential(1), class = sigma)),
+      iter = 2000, warmup = 1000, chains = 4, cores = 4,
+      seed = 6,
+      file = "fits/parent_collider_model")
+
+parent_collider_model
+```
+
+Lets plot what's happening
+
+```{r}
+d %>% 
+  mutate(centile = ifelse(p >= quantile(p, prob = .45) & p <= quantile(p, prob = .60), "a", "b"),
+         u = factor(u)) %>%
+  
+  ggplot(aes(x = g, y = c)) +
+  geom_point(aes(shape = centile, color = u),
+             size = 2.5, stroke = 1/4) +
+  stat_smooth(data = . %>% filter(centile == "a"),
+              method = "lm", se = F, size = 1/2, color = "black", fullrange = T) +
+  scale_shape_manual(values = c(19, 1)) +
+  scale_color_manual(values = c("black", "lightblue")) +
+  theme(legend.position = "none")
+```
+
+Stratifying by P as the regression line shows creates a negative relationship where nothing causal is happening!
+
+Now we'll fit the model with U
+
+```{r}
+grandparent_total <- 
+  update(parent_collider_model,
+         newdata = d,
+         formula = c ~ 0 + Intercept + p + g + u,
+         seed = 6,
+         file = "fits/grandparent_total")
+
+grandparent_total
+```
+
+Note the change in the effect of G on C. Remember that we coded it to have 0 effect in our simulation!
+
+**In short**: there are two ways for parents to attain their education: from G or from U. This is the classic setup for a collider.
+
+$~$
+
+## DAG thinking
+
+$~$
+
+In an experiment we aim to cut all the causes of the treatment through randomisation. 
+
+But if we don't randomise, can we overcome this with statistics? **Sometimes**.
+
+First some notation:
+
+$P(Y|do(X)) = P(Y|?)$
+
+Where P(Y) is the distribution of Y
+
+So the above means the distribution of Y conditional upon do(X) equals the distribution of Y conditional on some set of information.
+
+do(X) means to intervene on X - to set it to some particular value.
+
+We can do this with a DAG!
+
+```{r}
+dag_coords <-
+  tibble(name = c("U", "X", "Y"),
+         x    = c(2, 1, 3),
+         y    = c(2, 1, 1))
+
+dagify(X ~ U,
+       Y ~ X + U,
+       coords = dag_coords) %>%
+  gg_simple_dag()
+```
+
+If we don't know U we can find the distribution of Y, stratified by X and U, averaged over the distribution of U. But how?
+
+Remember that the causal effect of X on Y is not the coefficient relating X to Y. It is actually the distribution of Y when we change X, averaged over the distributions of the control variables (U in this case). This is a marginal effect.
+
+## Do calculus
+
+**The back-door criterion**
+
+A way to analyse graphs to find sets of variables to stratify by
+
+It can also help us design research.
+
+Formally it is a rule to find a set of variables to stratify (condition) by to yield $P(Y|do(X))$
+
+The steps:
+
+1. Identify all paths connecting the treatment (X) to the outcome (Y).
+
+2. Once you have the paths, focus on the paths that enter X. These are back-door paths (non-causal).
+
+3. Find adjustment set (set of variables to stratify by) that closes/blocks all back-door paths.
+
+## Controls
+
+**Control variable**: a variable we introduce to an analysis so that a causal estimate of something else is possible.
+
+Things you should not do:
+
+- Add everything you've measured
+
+- Including all variables that aren't collinear: sometimes both variables play a role in causality 
+
+- Anything measured before treatment is fair game to add - not true
+
+
+Taking some examples from Cinelli, Forney and Pearl 2021: A crash course in good and bad controls
+
+**Example 1**
+
+```{r}
+dag_coords <-
+  tibble(name = c("u", "X", "Z", "v", "Y"),
+         x    = c(1, 1, 2, 3, 3),
+         y    = c(2, 1, 1.6, 2, 1))
+
+dagify(X ~ u,
+       Z ~ u + v,
+       Y ~ v + X,
+       coords = dag_coords) %>%
+  gg_simple_dag()
+```
+
+Where _u_ and _v_ are unobserved variables.
+
+Let's say that Z denotes friendship status and X and Y the health of two people. _u_ and _v_ are the hobbies of person X and person Y.
+
+If we stratify by Z, that is, include it as a control, then we open a back-door path (it is a collider). This is bad for estimating the causal effect of X on Y.
+
+Note that Z could be a pre-treatment variable (I haven't been taught this but apparently it's a thing).
+
+Do calculus time - list the paths:
+
+1. X -> Y: front door
+
+2. X <- u -> Z <- v -> Y: backdoor. Closed **unless** you include Z. A bad control.
+
+**Example 2**
+
+```{r}
+dag_coords <-
+  tibble(name = c("X", "Z", "u", "Y"),
+         x    = c(1, 2, 2.5, 3),
+         y    = c(1, 1, 1.2, 1))
+
+dagify(Z ~ u + X,
+       Y ~ Z + u,
+       coords = dag_coords) %>%
+  gg_simple_dag()
+```
+
+Analyse the paths:
+
+X -> Z -> Y: front
+
+X -> Z <- u -> Y: still front
+
+Z is a mediator here, so if the goal to to estimate the effect of X on Y, we should not include Z in the model anyway. There is no back-door path we have to block.
+
+However, it's worse than that, because u - an unexplained variable - creates a fork. Including Z makes the estimate even worse than it would usually. This should always be noted where things might have a common cause e.g. happiness and lifespan or body size and fecundity. 
+
+**Add sim and plot**
+
+```{r}
+
+```
+
+
+Note that Z would turn out to be significant. This is spurious! Don't do backwards step selection. You need a causal model.
+
+$~$
+
+## Do not touch the collider
+
+$~$
+
+DAG example
+
+**Case control bias**
+
+```{r}
+dag_coords <-
+  tibble(name = c("X", "Z", "Y"),
+         x    = c(1, 2, 2),
+         y    = c(1, 2, 1))
+
+dagify(Z ~ Y,
+       Y ~ X,
+       coords = dag_coords) %>%
+  gg_simple_dag()
+```
+
+Ok, so this is a simple pipe. But if we want to know the causal effect of X on Y then we run into an issue if we control for Z.
+
+Imagine that X = education, Y = occupation and Z = Income. If we control for income, then this removes variation in Y, leaving less for education to explain - the effect size is underestimated. Now Z is not a cause of Y, but the model has no way of knowing that so it just measures the covariance. We are required to make this distinction.
+
+A common bad control. When you apply selection on the outcome - this ruins scientific influence.
+
+E.g. if you want to know the effect of education on occupation then you should not stratify by income because it narrows the range of cases you compare at each level. 
+
+**Sim this one as well code at 58.34**
+
+$~$
+
+**Precision parasite**
+
+```{r}
+dag_coords <-
+  tibble(name = c("X", "Z", "Y"),
+         x    = c(1, 1, 2),
+         y    = c(1, 2, 1))
+
+dagify(X ~ Z,
+       Y ~ X,
+       coords = dag_coords) %>%
+  gg_simple_dag()
+```
+
+While Z affects X it is not a back-door path because it does not connect to Y (except via the front door). However, it is still not good to condition on Z.
+
+The parasite does not change the mean estimate, but it creates an estimate with higher variance. We lose precision. 
+
+**Another sim**
+
+$~$
+
+**Bias amplification**
+
+A bad version of the precision parasite.
+
+```{r}
+dag_coords <-
+  tibble(name = c("X", "Z", "Y", "u"),
+         x    = c(1, 1, 2, 1.5),
+         y    = c(1, 2, 1, 1.75))
+
+dagify(X ~ Z + u,
+       Y ~ X + u,
+       coords = dag_coords) %>%
+  gg_simple_dag()
+```
+
+Remember _u_ is an unmeasured variable. We can't get an unbiased causal inference in this scenario.
+
+If we add Z, the world implodes. We get a really biased estimate, with an inflated effect size.
+
+WHY?
+
+Covariation between X and Y requires variation in their causes. Variation is removed by conditioning - we are accounting for this association then finding the variance explained by the remaining variables. So stratifying on X removes variation in X, which gives more weight to be explained by the confound U = stronger false relationship!
+
+Hard to get my head around but wow.
+
+Lets plot to help understanding.
+
+We'll sim a situation like the above. Z is a binomial variable that causally affects X. X has no effect on Y. However, u affects both X and Y.   
+
+```{r}
+n <- 1000
+Z <- rethinking::rbern(n)
+u <- rnorm(n)
+X <- rnorm(n, 7*Z + u)
+Y <- rnorm(n, 0*X + u)
+
+tibble(Z = as.factor(Z),
+       u = u,
+       X = X,
+       Y = Y) %>% 
+  
+  ggplot(aes(x = X, y = Y, colour = Z)) +
+  geom_point(aes(shape = Z), stroke =2, size = 1.2, alpha = 0.5) +
+  geom_smooth(
+    method = "lm", fullrange = T,
+    color = "black", se = F, size = 1) +
+  geom_smooth(data = . %>% filter(Z == "1"),
+              method = "lm", fullrange = T,
+              color = "blue", se = F, size = 1) +
+  geom_smooth(data = . %>% filter(Z == "0"),
+              method = "lm", fullrange = T,
+              color = "red", se = F, size = 1) +
+  scale_shape_manual(values = c(1, 19)) 
+```
+
+There is less variation in each 'stratification'!
+
+$~$
+
+
+The bias is amplified,
+
+Why?
+
+- X can't vary unless its causes vary 
+
+- If Z doesn't vary then X can't vary. Stratifying by this removes variance in X and in that way Y. This means a larger proportion of the variation in X comes from the confounding fork u.
+
+$~$
+
+## The Table 2 fallacy
+
+$~$
+
+In many fields the typical Table 2 in a manuscript will contain model coefficients.
+
+The thing is, not all the coefficients are causal effects and there is no information that tells you whether they are.
+
+Remember you have designed your model to identify the causal effect of X on Y. It is dangerous to interpret the effects of other variables that you have not designed the model for. The other variables are there to block back-door paths.
+
+```{r}
+dag_coords <-
+  tibble(name = c("S", "A", "X", "Y"),
+         x    = c(1, 1, 2, 3),
+         y    = c(3, 1, 2, 2))
+
+dagify(S ~ A,
+       X ~ S + A,
+       Y ~ S + A + X,
+       coords = dag_coords) %>%
+  gg_simple_dag()
+```
+
+S = smoking
+
+A = age
+
+X = HIV
+
+Y = stroke
+
+We want to know the effect of X on Y - the effect of HIV on stroke risk.
+
+Things to note:
+
+- Age has many effects, including some quite indirect ones
+
+- We need to decontaminate X of the effects of smoking and age.
+
+Back-door criterion:
+
+List paths
+
+1. X -> Y
+
+2. X <- S -> Y
+
+3. X <- A -> Y
+
+4. X <- A -> S -> Y
+
+We need to close paths 2-4. 
+
+We can condition by A and S to effectively do this.
+
+So we could fit a model that looks like this: 
+
+$$Y = X + S + A$$
+What if we focus on the effect of S?
+
+
+```{r}
+dagify(S ~ A,
+       X ~ S + A,
+       Y ~ S + A + X,
+       coords = dag_coords) %>%
+  gg_simple_dag()
+```
+
+S is confounded by A, as there is a back-door path. But we condition on A and X so that back-door path is closed.
+
+BUT
+
+What are we estimating for S? Well we have removed the indirect effect of S that acts through X, as we have closed that pipe. I.e. We are only estimating how smoking directly affects stroke, but not including how smoking acts on stroke through increasing the risk of HIV. This might be small or it might be large, we don't know. The take home is this coefficient measures something different than that of X.
+
+Now lets focus on **Age**.
+
+It acts through everything, so we need not include any of the conditional variables to find its total effect on stroke (both direct and indirect). But we have conditioned on S and X. We have closed these pathways. We only get the direct effect, which may be tiny!
+
+Take-home: don't interpret all coefficients as unconditional effects!
+
+**How to report results**
+
+Either
+
+1. Just report causal coefficients
+
+2. Give an explicit interpretation of each coefficient
+
+$~$
+
+# Lecture 7: Fitting Over and Under
+* * * *
+
+$~$
+
+Ockham's razor: the simple solution is often the best. This lecture will focus on why this is.
+
+We need to design efficient estimators: the struggle against data. Causual inference doesn't help us much here.
+
+**Problems with prediction**
+
+To aid our understanding let's use a Hominin dataset. We are interested in the affect of weight (mass) on brain volume. 
+
+```{r}
+
+# create the data and print the tibble
+
+(
+  hominin_data <- 
+  tibble(species = c("afarensis", "africanus", "habilis", "boisei", "rudolfensis", "ergaster", "sapiens"), 
+         brain   = c(438, 452, 612, 521, 752, 871, 1350), 
+         mass    = c(37.0, 35.5, 34.5, 41.5, 55.5, 61.0, 53.5))
+  )
+
+# standardise. However, rescale the outcome, brain volume, so that the largest observed value is 1. Why not standardize brain volume as well? Because we want to preserve zero as a reference point: No brain at all. You can’t have negative brain. I don’t think.
+
+hominin_data <-
+  hominin_data %>% 
+  mutate(mass_std = (mass - mean(mass)) / sd(mass),
+         brain_std = brain / max(brain))
+
+# plot the relationship between brain volume and weight
+
+
+hominin_data %>% 
+  ggplot(aes(x = mass, y = brain, label = species)) +
+  geom_point(size = 5, colour = met.brewer("Cassatt1")[2]) +
+  geom_text_repel(size = 3, colour = "black", family = "Courier", seed = 438, box.padding = 1) +
+  labs(subtitle = "Average brain volume by body\nmass for six hominin species",
+       x = "Body mass (kg)",
+       y = "Brain volume (cc)") +
+  xlim(30, 65) +
+  theme_classic() +
+    theme(text = element_text(family = "Courier"),
+          panel.background = element_rect(fill = alpha(met.brewer("Cassatt1", 8)[4], 1/4)))
+
+```
+
+
+What can we do with statistical models:
+
+1. Find a function that describes these points (fitting)
+
+2. What function explains these points (causal inference)
+
+3. What happens when we change a point's mass (intervention)
+
+4. What is the next observation from the same process (forecasting or **prediction**)
+
+We will focus on point 4 in this lecture.
+
+$~$
+
+## Cross Validation
+
+$~$
+
+- For simple models, more parameters improves fit within sample but may reduce accuracy out of sample
+
+- There is a trade off between flexibility and **overfitting**
+
+We can test how effective our linear regression is at prediction using **Leave-one-out-cross-validation**
+
+The steps:
+
+1. Drop one point
+
+2. Fit line to remaining points
+
+3. Predict dropped point
+
+4. Repeat (1) with next point
+
+5. Score based on the error between actual point and predicted point of the regression
+
+```{r}
+hominin_brain_mass_model <- 
+  brm(data = hominin_data, 
+      family = gaussian,
+      brain_std ~ 1 + mass_std,
+      prior = c(prior(normal(0.5, 1), class = Intercept),
+                prior(normal(0, 10), class = b),
+                prior(lognormal(0, 1), class = sigma)),
+      iter = 2000, warmup = 1000, chains = 4, cores = 4,
+      seed = 7,
+      file = "fits/hominin_brain_mass_model")
+```
+
+**Bayesian Cross-Validation**
+
+As usual we use distributions in bayes rather than points. The predictive distribution is uncertain, we don't get a specific point estimate for the prediction. A cross-validation score is a bit harder to get over a distribution, but luckily we can follow the **log pointwise predictive density** equation. I won't display it here because we can depend on the software. Just know that it is referred to as $lppd_{CV}$. Essentially this goes point by point like above, finds the posterior distribution, then averages this distribution over the number of samples (I think).
+
+Some definitions:
+
+**In sample score**: summed deviance of points from the full sample regression
+
+**Out of sample score**: summed deviance of points from each out of sample regression
+
+Let's fit more complex models
+
+```{r}
+# quadratic
+b7.2 <- 
+  update(hominin_brain_mass_model,
+         newdata = hominin_data, 
+         formula = brain_std ~ 1 + mass_std + I(mass_std^2),
+         iter = 2000, warmup = 1000, chains = 4, cores = 4,
+         seed = 7,
+         file = "fits/b07.02")
+
+# cubic
+b7.3 <- 
+  update(hominin_brain_mass_model,
+         newdata = hominin_data, 
+         formula = brain_std ~ 1 + mass_std + I(mass_std^2) + I(mass_std^3),
+         iter = 2000, warmup = 1000, chains = 4, cores = 4,
+         seed = 7,
+         control = list(adapt_delta = .9),
+         file = "fits/b07.03")
+
+
+# fourth-order
+b7.4 <- 
+  update(hominin_brain_mass_model,
+         newdata = hominin_data, 
+         formula = brain_std ~ 1 + mass_std + I(mass_std^2) + I(mass_std^3) + I(mass_std^4),
+         iter = 2000, warmup = 1000, chains = 4, cores = 4,
+         seed = 7,
+         control = list(adapt_delta = .995),
+         file = "fits/b07.04")
+
+# fifth-order
+b7.5 <- 
+  update(hominin_brain_mass_model,
+         newdata = hominin_data, 
+         formula = brain_std ~ 1 + mass_std + I(mass_std^2) + I(mass_std^3) + I(mass_std^4) + I(mass_std^5),
+         iter = 2000, warmup = 1000, chains = 4, cores = 4,
+         seed = 7,
+         control = list(adapt_delta = .99999),
+         file = "fits/b07.05")
+
+# make a function for plotting
+
+make_figure7.3 <- function(brms_fit, ylim = range(hominin_data$brain_std)) {
+  
+  
+  # define the new data 
+  nd <- tibble(mass_std = seq(from = -2, to = 2, length.out = 200))
+  
+  # simulate and wrangle
+  fitted(brms_fit, newdata = nd, probs = c(.055, .945)) %>% 
+    data.frame() %>% 
+    bind_cols(nd) %>% 
+    
+    # plot!  
+    ggplot(aes(x = mass_std)) +
+    geom_lineribbon(aes(y = Estimate, ymin = Q5.5, ymax = Q94.5),
+                    color = met.brewer("Cassatt1")[1], size = 1/2, 
+                    fill = alpha(met.brewer("Cassatt1")[2], 1/3)) +
+    geom_point(data = hominin_data,
+               aes(y = brain_std),
+               color = met.brewer("Cassatt1")[2],
+               size = 5) +
+    labs(x = "body mass (std)",
+         y = "brain volume (std)") +
+    coord_cartesian(xlim = c(-1.2, 1.5),
+                    ylim = ylim) +
+    theme_classic() +
+    theme(text = element_text(family = "Courier"),
+          panel.background = element_rect(fill = alpha(met.brewer("Cassatt1", 8)[4], 1/4)))
+  
+}
+
+p1 <- make_figure7.3(hominin_brain_mass_model)
+p2 <- make_figure7.3(b7.2)
+p3 <- make_figure7.3(b7.3)
+p4 <- make_figure7.3(b7.4, ylim = c(.25, 1.1))
+p5 <- make_figure7.3(b7.5, ylim = c(.1, 1.4))
+
+
+((p1 | p2) / (p3 | p4) / (p5)) +
+  plot_annotation(title = "Figure7.3. Polynomial linear models of increasing\ndegree for the hominin data.")
+```
+
+So how does this affect our fit?
+
+The in-sample score improves with model complexity, but the out of sample score gets worse (larger)! For the 4th order polynomial model in sample is insanely good, but the fit varies wildly once we remove a point. The take home is that we can build really complex models that fit the observed data really well, but have little to no predictive capacity for new data points. This is the basic trade-off inherent to modelling: over fitting leads to bad predictions.
+
+But what if we have more data?
+
+With more data we find that there is an intermediate model complexity (the 2nd degree model in this case) that maximises both within and out of sample deviance; that is, it is the best at describing these data. However, this doesn't mean that it explains them, it's just best at pure prediction in the **absence of intervention**. If we want to do this, we need to understand the causal structure.
+
+::: {.callout-tip}
+## From McElreath
+
+The overfit polynomial models fit the data extremely well, but they suffer for this within-sample accuracy by making nonsensical out-of-sample predictions. In contrast, **underfitting** produces models that are inaccurate both within and out of sample. They learn too little, failing to recover regular features of the sample. (p. 201)
+:::
+
+$~$
+
+To explore the distinctions between overfitting and underfitting, we’ll need to refit the models above several times after serially dropping one of the rows in the data. You can `filter()` by `row_number()` to drop rows in a tidyverse kind of way. For example, we can drop the second row of `hominin_data` like this.
+
+```{r}
+hominin_data %>%
+  mutate(row = 1:n()) %>% 
+  filter(row_number() != 2)
+```
+
+Now we'll make a function `brain_loo_lines()` that will refit the model and extract lines information in one step.
+
+```{r}
+nd <- tibble(mass_std = seq(from = -2, to = 2, length.out = 100))
+
+brain_loo_lines <- function(brms_fit, row, ...) {
+  
+  # refit the model
+  new_fit <- 
+    update(brms_fit,
+           newdata = filter(hominin_data, row_number() != row), 
+           iter = 2000, warmup = 1000, chains = 4, cores = 4,
+           seed = 7,
+           refresh = 0,
+           ...)
+  
+  # pull the lines values
+  fitted(new_fit, 
+         newdata = nd) %>% 
+    data.frame() %>% 
+    select(Estimate) %>% 
+    bind_cols(nd)
+  
+}
+
+```
+
+Now use `map()` to iterate the function on all LOO dataset versions
+
+```{r}
+hominin_fits <-
+  tibble(row = 1:7) %>% 
+  mutate(post = purrr::map(row, ~brain_loo_lines(brms_fit = hominin_brain_mass_model, row = .))) %>% 
+  unnest(post)
+
+hominin_polynomial_fits <-
+  tibble(row = 1:7) %>% 
+  mutate(post = purrr::map(row, ~brain_loo_lines(brms_fit = b7.4, 
+                                                 row = ., 
+                                                 control = list(adapt_delta = .999)))) %>% 
+  unnest(post)
+```
+
+Plot the results
+
+```{r}
+# left
+p1 <-
+  hominin_fits %>%  
+  
+  ggplot(aes(x = mass_std)) +
+  geom_line(aes(y = Estimate, group = row),
+            color = met.brewer("Cassatt1", 8)[2], linewidth = 1/2, alpha = 1/2) +
+  geom_point(data = hominin_data,
+             aes(y = brain_std),
+             color = met.brewer("Cassatt1", 8)[2],
+             size = 5) +
+  labs(x = "body mass (std)",
+       y = "brain volume (std)") +
+  coord_cartesian(xlim = range(hominin_data$mass_std),
+                  ylim = range(hominin_data$brain_std)) +
+  theme_classic() +
+  theme(text = element_text(family = "Courier"),
+        panel.background = element_rect(fill = alpha(met.brewer("Cassatt1", 8)[4], 1/4)))
+
+# right
+p2 <-
+  hominin_polynomial_fits %>%  
+  
+  ggplot(aes(x = mass_std, y = Estimate)) +
+  geom_line(aes(group = row),
+            color = met.brewer("Cassatt1", 8)[2], linewidth = 1/2, alpha = 1/2) +
+  geom_point(data = hominin_data,
+             aes(y = brain_std),
+             color = met.brewer("Cassatt1", 8)[2],
+             size = 5) +
+  labs(x = "body mass (std)",
+       y = "brain volume (std)") +
+  coord_cartesian(xlim = range(hominin_data$mass_std),
+                  ylim = c(-0.1, 1.4)) +
+  theme_classic() +
+  theme(text = element_text(family = "Courier"),
+        panel.background = element_rect(fill = alpha(met.brewer("Cassatt1", 8)[4], 1/4)))
+
+# combine
+p1 + p2
+```
+
+::: {.callout-tip}
+## From McElreath
+
+“Notice that the straight lines hardly vary, while the curves fly about wildly. This is a general contrast between underfit and overfit models: sensitivity to the exact composition of the sample used to fit the model” (p. 201).
+:::
+
+
+## Regularisation
+
+$~$
+
+We can design models that are better at prediction in their structure.
+
+We want to identify regular features in the data, this leads to good predictions
+
+We can minimise over fitting with:
+
+**Priors**:
+
+- Sceptical priors have tighter variance, and reduce the flexibility of a model
+
+- Often tighter than we think they need to be
+
+- These improve predictions
+
+- Essentially, tight priors stop the model overreacting to nonsense within the sample
+
+**Choosing the width of a prior**
+
+- For causal inference, use science, then go a touch tighter.
+
+- For pure prediction, we can use cross-validation to tune the prior.
+
+- Many tasks are a mix of both
+
+**Prediction penalty**
+
+For N points, cross-validation requires fitting N models. This quickly becomes computationally expensive, when your dataset gets larger.
+
+Good news! We can compute the prediction penalty from a single model fit. There are two ways:
+
+1. Importance sampling (PSIS)
+
+2. Information criteria (WAIC or LOO)
+
+$~$
+
+## Predictive criteria should not be casued to choose model structure
+
+- They often prefer confounds and colliders
+
+**Example: return of the plant growth experiment**
+
+The DAG looks like this:
+
+```{r}
+# define our coordinates
+dag_coords <-
+  tibble(name = c("H0", "T", "F", "H1"),
+         x    = c(1, 5, 4, 3),
+         y    = c(2, 2, 1.5, 1))
+
+# save our DAG
+dag <-
+  dagify(F ~ T,
+         H1 ~ H0 + F,
+         coords = dag_coords)
+
+# plot 
+dag %>%
+ gg_simple_dag()
+```
+
+And the data:
+
+```{r}
+head(plant_experiment)
+```
+
+Now lets add the information criterion `loo` (leave one out) to the model object. `loo` is the PSIS metric McElreath spruiks. Then plot the result.
+
+```{r}
+fungal_model <- add_criterion(fungal_model, criterion = "loo")
+fungal_model_causal <- add_criterion(fungal_model_causal, criterion = "loo")
+
+loo <- loo_compare(fungal_model, fungal_model_causal, criterion = "loo")
+
+print(loo, simplify = F)
+
+```
+
+```{r}
+loo[, 7:8] %>% 
+  data.frame() %>% 
+  rownames_to_column("model_name") %>% 
+  mutate(model_name = fct_reorder(model_name, looic, .desc = T)) %>% 
+  
+  ggplot(aes(x = looic, y = model_name, 
+             xmin = looic - se_looic, 
+             xmax = looic + se_looic)) +
+  geom_pointrange(color = met.brewer("Cassatt1", 8)[2],
+                  fill = met.brewer("Cassatt1", 8)[1], shape = 21) +
+  labs(x = "PSIS-LOO", y = NULL) +
+  theme(axis.ticks.y = element_blank()) +
+  theme_classic() +
+  theme(text = element_text(family = "Courier"),
+        panel.background = element_rect(fill = alpha(met.brewer("Cassatt1", 8)[4], 1/4)))
+```
+
+Fungus status is actually a better predictor of plant growth than anti-fungal treatment. Makes sense, the treatment is essentially an imperfect proxy for fungal status. For prediction this is better, but it's terrible for determining the effect of the treatment. See that your preferred model depends entirely upon your aim.
+
+```{r}
+p1 <-
+  plant_experiment %>% 
+  mutate(growth = h1 - h0) %>% 
+  ggplot(aes(x = fungus, y = growth, colour = treatment)) +
+  geom_jitter(size = 3, shape = 1.5, stroke =2, alpha = 0.75) +
+  labs(x = "Presence of fungus",
+       y = "Plant growth") + 
+  theme_classic()
+
+p2 <-
+  plant_experiment %>% 
+  mutate(growth = h1 - h0) %>% 
+  ggplot(aes(x = treatment, y = growth, colour = fungus)) +
+  geom_jitter(size = 3, shape = 1.5, stroke =2, alpha = 0.75) +
+  labs(x = "Presence of fungus",
+       y = "Plant growth") +
+  theme_classic()
+
+
+p1 / p2
+
+```
+
+$~$
+
+## Importance sampling
+
+$~$
+
+Use a single posterior distribution for N points to sample for each posterior for N-1 points.
+
+Key idea: Point with low probability has a strong influence on posterior distribution. Highly probable points on the other hand do not individually affect the posterior distribution much, because there are other points in close proximity conveying very similar information.
+
+Can use pointwise probabilities to re-weight samples from the posterior.
+
+BUT, importance sampling tends to be unreliable.
+
+The best current one: **Pareto-smoothed importance sampling**
+
+- More stable (lower variance)
+
+- Useful diagnostics (it will tell you when it's bad aka has high variance)
+
+- Identifies important (high leverage) points (outliers)
+
+$~$
+
+## Information criteria
+
+$~$
+
+**Akaike information criteria: AIC**
+
+The first form. For flat priors and large samples:
+
+$AIC = (-2) * lppd + 2k$
+
+Where -2 is a scaling term, lppd is the log pointwise predictive density and 2k is a penalty term for complexity, where k is the number of parameters.
+
+If we want to use good priors, we can't use it. 
+
+$~$
+
+**Widely applicable information criterion: WAIC**
+
+$WAIC(y, \Theta) =  -2(lppd - \sum var_{\Theta} log p(y_{i}|\Theta))$
+
+This is a more complex formula but is has some similarities to the AIC formula.
+
+$\sum var_{\Theta} log p(y_{i}|\Theta)$ is the penalty term now.
+
+$WAIC$ provides a very similar result to PSIS, but without the diagnostics.
+
+$~$
+
+## Outliers and robust regression
+
+$~$
+
+Some points are more important for the posterior distribution than others.
+
+Outliers are observations in the tails of predictive distributions 
+
+If a model has outliers, this indicates the model doesn't expect enough variation. This can lead to poor, damaging predictions.
+
+Say we want to predict hurricane strength. We really don't want to disregard extreme hurricanes, as this would be disastrous.
+
+Don't drop outliers, **it's the models fault, not the data's**. But how do we deal with them?
+
+- It's the model that's wrong, not the data
+
+- First, quantify influence of each point - we can do this with cross validation
+
+- Second, use a mixture model with fatter tails i.e. the student t distribution.
+
+$~$
+
+**Robust regression**
+
+We're back at the divorce rate example, where Idaho and Maine are outliers. Idaho has the lowest median marriage age and a very low divorce rate, while Maine has a very high divorce rate, but an average age of marriage.
+
+```{r}
+b5.3 <- 
+  brm(data = Waffle_data, 
+      family = gaussian,
+      d ~ 1 + m + a,
+      prior = c(prior(normal(0, 0.2), class = Intercept),
+                prior(normal(0, 0.5), class = b),
+                prior(exponential(1), class = sigma)),
+      iter = 2000, warmup = 1000, chains = 4, cores = 4,
+      seed = 5,
+      file = "fits/b05.03")
+
+b5.3 <- add_criterion(b5.3, criterion = "loo")
+
+b5.3 <- add_criterion(b5.3, "waic", file = "fits/b05.03")
+
+Waffle_data %>% 
+  mutate(outlier = if_else(Location %in% c("Idaho", "Maine"), "YES", "NO")) %>% 
+  ggplot(aes(x = a, y = d, colour = outlier)) +
+  geom_point(shape = 1.5, stroke = 2, size = 3) +
+  scale_colour_manual(values = c(met.brewer("Cassatt1")[2], met.brewer("Cassatt1")[6])) +
+  geom_text_repel(aes(label = Location),
+                  data = Waffle_data %>% filter(Location == c("Idaho", "Maine")), size = 5, colour = "black", family = "Courier", seed = 438, box.padding = 0.5) +
+  labs(x = "Age at marriage (std)",
+       y = "Divorce rate (std)") +
+  theme_classic() +
+  theme(legend.position = "none")
+
+```
+
+Using PSIS we can find which data points are outliers
+
+```{r}
+loo(b5.3)
+```
+
+Ok so we have one point that is having a large effect on the posterior. Which is it?
+
+```{r}
+loo(b5.3) %>% 
+  pareto_k_ids(threshold = 0.5)
+```
+
+Point 13, this means row 13 in the tibble. Lets find out which location that corresponds to.
+
+```{r}
+Waffle_data %>% 
+  as_tibble() %>% 
+  slice(13) %>% 
+  select(Location:Loc)
+```
+
+We can quantify the influence using the PSIS k statistic or the WAIC penalty term (the effective number of parameters)
+
+Let's plot them both 
+
+```{r}
+
+tibble(pareto_k = b5.3$criteria$loo$diagnostics$pareto_k,
+       p_waic   = b5.3$criteria$waic$pointwise[, "p_waic"],
+       Loc      = pull(Waffle_data, Loc)) %>% 
+  
+  ggplot(aes(x = pareto_k, y = p_waic, color = Loc == "ID")) +
+  geom_vline(xintercept = .5, linetype = 2, color = "black", alpha = 1/2) +
+  geom_point(aes(shape = Loc == "ID"), size = 3, stroke = 2, alpha = 0.8) +
+  geom_text(data = . %>% filter(p_waic > 0.5),
+            aes(x = pareto_k - 0.03, label = Loc),
+            hjust = 1) +
+  scale_color_manual(values = met.brewer("Cassatt1")[c(2, 5)]) +
+  scale_shape_manual(values = c(1, 19)) +
+  labs(subtitle = "Gaussian model (b5.3)") +
+  theme_classic() +
+  theme(legend.position = "none")
+```
+
+We can combat outliers with **mixture models**
+
+- Use multiple gaussian distributions with different variances: produces the **student t distribution**
+
+- We have a distribution with thicker tails, meaning that it **expects more extreme points than your standard gaussian model**
+
+```{r}
+tibble(x = seq(from = -6, to = 6, by = 0.01)) %>% 
+  mutate(Gaussian    = dnorm(x),
+         `Student-t` = dstudent_t(df = 2, x)) %>% 
+  pivot_longer(-x,
+               names_to = "likelihood",
+               values_to = "density") %>% 
+  mutate(`minus log density` = -log(density)) %>% 
+  pivot_longer(contains("density")) %>% 
+  
+  ggplot(aes(x = x, y = value, group = likelihood, color = likelihood)) +
+  geom_line() +
+  scale_color_manual(values = c(met.brewer("Cassatt1")[2], "black")) +
+  ylim(0, NA) +
+  labs(x = "value", y = NULL) +
+  theme(strip.background = element_blank()) +
+  facet_wrap(~ name, scales = "free_y") +
+  theme_classic()
+```
+
+Let's try it out and retest those PSIS, WAIC values.
+
+This is an easy model to fit in `brms`
+
+```{r}
+b5.3t <- 
+  brm(data = Waffle_data, 
+      family = student,
+      bf(d ~ 1 + m + a, nu = 2),
+      prior = c(prior(normal(0, 0.2), class = Intercept),
+                prior(normal(0, 0.5), class = b),
+                prior(exponential(1), class = sigma)),
+      iter = 2000, warmup = 1000, chains = 4, cores = 4,
+      seed = 5,
+      file = "fits/b05.03t")
+
+b5.3t <- add_criterion(b5.3t, criterion = c("loo", "waic"))
+
+# plot
+
+tibble(pareto_k = b5.3t$criteria$loo$diagnostics$pareto_k,
+       p_waic   = b5.3t$criteria$waic$pointwise[, "p_waic"],
+       Loc      = pull(Waffle_data, Loc)) %>% 
+  
+  ggplot(aes(x = pareto_k, y = p_waic, color = Loc == "ID")) +
+  geom_point(aes(shape = Loc == "ID"), size = 3, stroke = 2) +
+  geom_text(data = . %>% filter(Loc %in% c("ID", "ME")),
+            aes(x = pareto_k - 0.01, label = Loc),
+            hjust = 1) +
+  scale_color_manual(values = met.brewer("Cassatt1")[c(2, 5)]) +
+  scale_shape_manual(values = c(1, 19)) +
+  labs(subtitle = "Student-t model (b5.3t)") +
+  theme_classic() +
+  theme(legend.position = "none") 
+```
+
+And a final comparison
+
+```{r}
+bind_rows(posterior_samples(b5.3),
+          posterior_samples(b5.3t)) %>% 
+  mutate(fit = rep(c("Gaussian (b5.3)", "Student-t (b5.3t)"), each = n() / 2)) %>% 
+  pivot_longer(b_Intercept:sigma) %>% 
+  mutate(name = factor(name,
+                       levels = c("b_Intercept", "b_a", "b_m", "sigma"),
+                       labels = c("alpha", "beta[a]", "beta[m]", "sigma"))) %>% 
+  
+  ggplot(aes(x = value, y = fit, color = fit)) +
+  stat_pointinterval(.width = .95, size = 1) +
+  scale_color_manual(values = c(met.brewer("Cassatt1")[1], "black")) +
+  labs(x = "posterior", y = NULL) +
+  theme_classic() +
+  theme(axis.text.y = element_text(hjust = 0),
+        axis.ticks.y = element_blank(),
+        legend.position = "none",
+        strip.background = element_rect(fill = alpha(met.brewer("Cassatt1")[2], 1/4), color = "transparent"),
+        strip.text = element_text(size = 12)) +
+  facet_wrap(~ name, ncol = 1, labeller = label_parsed)
+```
+
+Overall, the coefficients are very similar between the two models.
+
+**Robust regression summary**
+
+- Lots of unobserved heterogeneity that comes from a mixture of Gaussian distributions
+
+- Thicker tails makes the model less surprised/influenced by extreme observations
+
+- Degrees of freedom determines how much weight to put in the tails. No good way of doing this other than trial and error...
+
+- Student-t regression is a nice default (perhaps better than Gaussian)

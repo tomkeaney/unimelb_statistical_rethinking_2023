@@ -3,6 +3,16 @@ project:
   type: website
   output-dir: docs
 
+website:
+  title: "Stats rethinking with brms"
+  navbar:
+    pinned: true
+    left:
+      - text: "Main notes"
+        file: unimelb_statistical_rethinking_2023.qmd
+      - text: "Simulation example"
+        file: simulating_and_modelling.qmd
+
 execute:
   warning: false
 
