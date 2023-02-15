@@ -237,6 +237,22 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
   <li><a href="#diagnostics" id="toc-diagnostics" class="nav-link" data-scroll-target="#diagnostics">Diagnostics</a></li>
   <li><a href="#bad-chains" id="toc-bad-chains" class="nav-link" data-scroll-target="#bad-chains">Bad chains</a></li>
   </ul></li>
+  <li><a href="#lecture-9-modelling-events" id="toc-lecture-9-modelling-events" class="nav-link" data-scroll-target="#lecture-9-modelling-events">Lecture 9: Modelling events</a>
+  <ul class="collapse">
+  <li><a href="#modelling-events" id="toc-modelling-events" class="nav-link" data-scroll-target="#modelling-events">Modelling events</a></li>
+  <li><a href="#uc-berkeley-admissions" id="toc-uc-berkeley-admissions" class="nav-link" data-scroll-target="#uc-berkeley-admissions">UC Berkeley admissions</a></li>
+  <li><a href="#generalised-linear-models" id="toc-generalised-linear-models" class="nav-link" data-scroll-target="#generalised-linear-models">Generalised Linear Models</a></li>
+  <li><a href="#link-functions" id="toc-link-functions" class="nav-link" data-scroll-target="#link-functions">Link functions</a></li>
+  <li><a href="#analysing-uc-berkelely-data" id="toc-analysing-uc-berkelely-data" class="nav-link" data-scroll-target="#analysing-uc-berkelely-data">Analysing UC Berkelely data</a></li>
+  <li><a href="#survival-analysis-bonus" id="toc-survival-analysis-bonus" class="nav-link" data-scroll-target="#survival-analysis-bonus">Survival analysis bonus</a></li>
+  </ul></li>
+  <li><a href="#lecture-10-counts-and-confounds" id="toc-lecture-10-counts-and-confounds" class="nav-link" data-scroll-target="#lecture-10-counts-and-confounds">Lecture 10: Counts and Confounds</a>
+  <ul class="collapse">
+  <li><a href="#uc-berkeley-continued---confounded-admissions" id="toc-uc-berkeley-continued---confounded-admissions" class="nav-link" data-scroll-target="#uc-berkeley-continued---confounded-admissions">UC Berkeley continued - Confounded admissions</a></li>
+  <li><a href="#sensitivity-analysis" id="toc-sensitivity-analysis" class="nav-link" data-scroll-target="#sensitivity-analysis">Sensitivity analysis</a></li>
+  <li><a href="#poisson-counts-oceanic-tool-use" id="toc-poisson-counts-oceanic-tool-use" class="nav-link" data-scroll-target="#poisson-counts-oceanic-tool-use">Poisson counts: Oceanic tool use</a></li>
+  <li><a href="#a-new-example-oceanic-tool-use" id="toc-a-new-example-oceanic-tool-use" class="nav-link" data-scroll-target="#a-new-example-oceanic-tool-use">A new example: Oceanic tool use</a></li>
+  </ul></li>
   </ul>
 </nav>
 </nav>
@@ -752,7 +768,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sim_globe</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-stdout">
-<pre><code>[1] "W" "W" "L" "W" "W" "W" "L" "W" "L"</code></pre>
+<pre><code>[1] "W" "W" "W" "W" "L" "W" "W" "W" "W"</code></pre>
 </div>
 </div>
 <p>Now lets test it on extreme settings</p>
@@ -774,7 +790,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sum</span>(<span class="fu">sim_globe</span>(<span class="at">p=</span><span class="fl">0.5</span>, <span class="at">N =</span> <span class="fl">1e4</span>) <span class="sc">==</span> <span class="st">"W"</span>) <span class="sc">/</span> <span class="fl">1e4</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-stdout">
-<pre><code>[1] 0.5042</code></pre>
+<pre><code>[1] 0.4986</code></pre>
 </div>
 </div>
 <p>Also looks good.</p>
@@ -806,9 +822,9 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
    poss  ways  post
   &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;
 1  0        0 0    
-2  0.25     9 0.003
-3  0.5    512 0.189
-4  0.75  2187 0.808
+2  0.25     3 0    
+3  0.5    512 0.072
+4  0.75  6561 0.927
 5  1        0 0    </code></pre>
 </div>
 </div>
@@ -4788,6 +4804,1431 @@ scale reduction factor on split chains (at convergence, Rhat = 1).</code></pre>
 </div>
 </div>
 <p>Note that sigma is upwardly distributed. This is normal for a scale parameter.</p>
+<p><span class="math inline">\(~\)</span></p>
+</section>
+</section>
+<section id="lecture-9-modelling-events" class="level1">
+<h1>Lecture 9: Modelling events</h1>
+<hr>
+<p><span class="math inline">\(~\)</span></p>
+<section id="modelling-events" class="level2">
+<h2 class="anchored" data-anchor-id="modelling-events">Modelling events</h2>
+<ul>
+<li><p>Events: discrete, unordered outcomes</p></li>
+<li><p>Observations are counts</p></li>
+<li><p>Unknowns are probabilities, or odds (transformed probabilities)</p></li>
+<li><p>Odds are probs event happens / prob it does not</p></li>
+<li><p>Everything interacts always everywhere!</p></li>
+<li><p>A beast known as ‘log-odds’ - the logarithm of the odds.</p></li>
+</ul>
+<p><span class="math inline">\(~\)</span></p>
+</section>
+<section id="uc-berkeley-admissions" class="level2">
+<h2 class="anchored" data-anchor-id="uc-berkeley-admissions">UC Berkeley admissions</h2>
+<p><span class="math inline">\(~\)</span></p>
+<p>4526 graduate school applications for 1973 UC Berkeley. The data is stratified by department and gender.</p>
+<p><strong>The idea was to test for gender discrimination</strong>.</p>
+<div class="cell">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb163"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb163-1"><a href="#cb163-1" aria-hidden="true" tabindex="-1"></a><span class="fu">data</span>(UCBadmit, <span class="at">package =</span> <span class="st">"rethinking"</span>)</span>
+<span id="cb163-2"><a href="#cb163-2" aria-hidden="true" tabindex="-1"></a>UCB_admissions <span class="ot">&lt;-</span> UCBadmit <span class="sc">%&gt;%</span> <span class="fu">as_tibble</span>()</span>
+<span id="cb163-3"><a href="#cb163-3" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span>(UCBadmit)</span>
+<span id="cb163-4"><a href="#cb163-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb163-5"><a href="#cb163-5" aria-hidden="true" tabindex="-1"></a>UCB_admissions</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 12 × 5
+   dept  applicant.gender admit reject applications
+   &lt;fct&gt; &lt;fct&gt;            &lt;int&gt;  &lt;int&gt;        &lt;int&gt;
+ 1 A     male               512    313          825
+ 2 A     female              89     19          108
+ 3 B     male               353    207          560
+ 4 B     female              17      8           25
+ 5 C     male               120    205          325
+ 6 C     female             202    391          593
+ 7 D     male               138    279          417
+ 8 D     female             131    244          375
+ 9 E     male                53    138          191
+10 E     female              94    299          393
+11 F     male                22    351          373
+12 F     female              24    317          341</code></pre>
+</div>
+</div>
+<p>Right, let’s start with the OWL infrastructure.</p>
+<ol type="1">
+<li>and 2) together. Find the estimand and describe the scientific model</li>
+</ol>
+<p>DAG time</p>
+<div class="cell">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb165"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb165-1"><a href="#cb165-1" aria-hidden="true" tabindex="-1"></a>dag_coords <span class="ot">&lt;-</span></span>
+<span id="cb165-2"><a href="#cb165-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tibble</span>(<span class="at">name =</span> <span class="fu">c</span>(<span class="st">"G"</span>, <span class="st">"D"</span>, <span class="st">"A"</span>),</span>
+<span id="cb165-3"><a href="#cb165-3" aria-hidden="true" tabindex="-1"></a>         <span class="at">x    =</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>),</span>
+<span id="cb165-4"><a href="#cb165-4" aria-hidden="true" tabindex="-1"></a>         <span class="at">y    =</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">1</span>))</span>
+<span id="cb165-5"><a href="#cb165-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb165-6"><a href="#cb165-6" aria-hidden="true" tabindex="-1"></a><span class="fu">dagify</span>(A <span class="sc">~</span> G <span class="sc">+</span> D,</span>
+<span id="cb165-7"><a href="#cb165-7" aria-hidden="true" tabindex="-1"></a>       D <span class="sc">~</span> G,</span>
+<span id="cb165-8"><a href="#cb165-8" aria-hidden="true" tabindex="-1"></a>       <span class="at">coords =</span> dag_coords) <span class="sc">%&gt;%</span></span>
+<span id="cb165-9"><a href="#cb165-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">gg_simple_dag</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<p><img src="unimelb_statistical_rethinking_2023_files/figure-html/unnamed-chunk-129-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<p>G = Gender</p>
+<p>D = Department e.g.&nbsp;science, arts etc - some departments have high competitive admission, whereas others have low, where it’s easier to achieve admission.</p>
+<p>A = Admission</p>
+<p><strong>Department is a mediator. This is a very common causal structure</strong>.</p>
+<p>What do we mean by the <em>causal effect of gender</em>?</p>
+<ul>
+<li><p>How does the referee perceive someone based on gender. This can be blinded, at least to some extent.</p></li>
+<li><p>But gender also affects where someone applies…</p></li>
+</ul>
+<p><strong>Which of the paths in this DAG are discrimination?</strong></p>
+<ul>
+<li><p>The direct path is status-based or taste-based (refs are biased for or against individuals of particular genders)</p></li>
+<li><p>Indirect path is structural discrimination e.g.&nbsp;unequal access to higher education by greater funding for a gender biased program</p></li>
+<li><p>Total: both paths: this is what people experience</p></li>
+</ul>
+<p>Build the model with some simulated data</p>
+<div class="cell">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb166"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb166-1"><a href="#cb166-1" aria-hidden="true" tabindex="-1"></a><span class="co"># generative model, basic mediator scenario</span></span>
+<span id="cb166-2"><a href="#cb166-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb166-3"><a href="#cb166-3" aria-hidden="true" tabindex="-1"></a>N <span class="ot">&lt;-</span> <span class="dv">1000</span> <span class="co"># number of applications</span></span>
+<span id="cb166-4"><a href="#cb166-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb166-5"><a href="#cb166-5" aria-hidden="true" tabindex="-1"></a>G <span class="ot">&lt;-</span> <span class="fu">sample</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">2</span>, <span class="at">size =</span> N, <span class="at">replace =</span> T) <span class="co"># close to even gender distribution, like flipping a coin N times</span></span>
+<span id="cb166-6"><a href="#cb166-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb166-7"><a href="#cb166-7" aria-hidden="true" tabindex="-1"></a>D <span class="ot">&lt;-</span> <span class="fu">rbernoulli</span>(N, <span class="fu">if_else</span>(G <span class="sc">==</span><span class="dv">1</span>, <span class="fl">0.3</span>, <span class="fl">0.8</span>)) <span class="sc">+</span> <span class="dv">1</span> <span class="co"># gender 1 individuals tend to apply to department 1, G2 applies to d 2 more often</span></span>
+<span id="cb166-8"><a href="#cb166-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb166-9"><a href="#cb166-9" aria-hidden="true" tabindex="-1"></a><span class="co"># matrix of acceptance rates</span></span>
+<span id="cb166-10"><a href="#cb166-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb166-11"><a href="#cb166-11" aria-hidden="true" tabindex="-1"></a>accept_rate <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="fu">c</span>(<span class="fl">0.1</span>, <span class="fl">0.3</span>, <span class="fl">0.1</span>, <span class="fl">0.3</span>), <span class="at">nrow =</span> <span class="dv">2</span>) <span class="co"># rows are departments, columns are genders. Note we code no discrimination</span></span>
+<span id="cb166-12"><a href="#cb166-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb166-13"><a href="#cb166-13" aria-hidden="true" tabindex="-1"></a><span class="co"># simulate acceptance</span></span>
+<span id="cb166-14"><a href="#cb166-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb166-15"><a href="#cb166-15" aria-hidden="true" tabindex="-1"></a>A <span class="ot">&lt;-</span>rethinking<span class="sc">::</span><span class="fu">rbern</span>(N, accept_rate[D, G])</span>
+<span id="cb166-16"><a href="#cb166-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb166-17"><a href="#cb166-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb166-18"><a href="#cb166-18" aria-hidden="true" tabindex="-1"></a><span class="fu">table</span>(G, D)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>   D
+G     1   2
+  1 349 136
+  2 109 406</code></pre>
+</div>
+</div>
+<p>The Table illustrates that Gender 1 applies to department 1 more often than does gender 2.</p>
+<div class="cell">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb168"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb168-1"><a href="#cb168-1" aria-hidden="true" tabindex="-1"></a><span class="fu">table</span>(G, A)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>   A
+G     0   1
+  1 401  84
+  2 385 130</code></pre>
+</div>
+</div>
+<p>This Table shows that Gender 2 gets accepted more often than Gender 1. This is because it’s easier to get into department 2. This is the mediating path.</p>
+<p>Now let’s code in some direct discrimination</p>
+<div class="cell">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb170"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb170-1"><a href="#cb170-1" aria-hidden="true" tabindex="-1"></a>(</span>
+<span id="cb170-2"><a href="#cb170-2" aria-hidden="true" tabindex="-1"></a>  accept_rate_dis <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="fu">c</span>(<span class="fl">0.05</span>, <span class="fl">0.2</span>, <span class="fl">0.1</span>, <span class="fl">0.3</span>), <span class="at">nrow =</span> <span class="dv">2</span>)</span>
+<span id="cb170-3"><a href="#cb170-3" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>     [,1] [,2]
+[1,] 0.05  0.1
+[2,] 0.20  0.3</code></pre>
+</div>
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb172"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb172-1"><a href="#cb172-1" aria-hidden="true" tabindex="-1"></a>A_dis <span class="ot">&lt;-</span> rethinking<span class="sc">::</span><span class="fu">rbern</span>(N, accept_rate_dis[D, G])</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
+<p>Here are the new results</p>
+<div class="cell">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb173"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb173-1"><a href="#cb173-1" aria-hidden="true" tabindex="-1"></a><span class="fu">table</span>(G, D)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>   D
+G     1   2
+  1 349 136
+  2 109 406</code></pre>
+</div>
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb175"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb175-1"><a href="#cb175-1" aria-hidden="true" tabindex="-1"></a><span class="fu">table</span>(G, A)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>   A
+G     0   1
+  1 401  84
+  2 385 130</code></pre>
+</div>
+</div>
+<p>We get the same pattern! This means that we cannot tell which causal path is dictating the effect. So we must turn to the backdoor criteria.</p>
+<p><span class="math inline">\(~\)</span></p>
+</section>
+<section id="generalised-linear-models" class="level2">
+<h2 class="anchored" data-anchor-id="generalised-linear-models">Generalised Linear Models</h2>
+<p><span class="math inline">\(~\)</span></p>
+<p>A linear model is part of a larger family of models called generalised linear models. Generalised linear models have an expected value that is some function of an additive combination of parameters (linear models are this but without the function).</p>
+<p>The linear model can take any real value, but if we have a bernoulli data generating process we need to limit these values within a range of 0 and 1.</p>
+<p><strong>Distributions</strong>:</p>
+<ul>
+<li><p>The relative number of ways to observe data, given assumptions</p></li>
+<li><p>Distributions are matched to constraints on the observed data e.g.&nbsp;counts can’t be negative</p></li>
+<li><p>Link functions match distributions (brms will give you these)</p></li>
+</ul>
+<p>The notation:</p>
+<p><span class="math inline">\(Y_{i} = Bernoulli(p_i)\)</span></p>
+<p><span class="math inline">\(f(p_i) = \alpha + \beta_XX_i + B_ZZ_i\)</span></p>
+<p><span class="math inline">\(Y_i\)</span> is a 0/1 outcome</p>
+<p><span class="math inline">\(p_i\)</span> is the probability of the event</p>
+<p><span class="math inline">\(\alpha + \beta_XX_i + B_ZZ_i\)</span> is identical to the linear model and can take any real value</p>
+<p><span class="math inline">\(f()\)</span> <strong>maps the probability scale to the linear scale</strong></p>
+<p><span class="math inline">\(~\)</span></p>
+</section>
+<section id="link-functions" class="level2">
+<h2 class="anchored" data-anchor-id="link-functions">Link functions</h2>
+<ul>
+<li><p><span class="math inline">\(f\)</span> is the link function.</p></li>
+<li><p>Links parameters of distribution to linear model</p></li>
+</ul>
+<div class="cell">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb177"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb177-1"><a href="#cb177-1" aria-hidden="true" tabindex="-1"></a><span class="fu">tibble</span>(<span class="at">x =</span> <span class="fu">seq</span>(<span class="at">from =</span> <span class="sc">-</span><span class="dv">1</span>, <span class="at">to =</span> <span class="dv">3</span>, <span class="at">by =</span> .<span class="dv">01</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb177-2"><a href="#cb177-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">probability =</span> .<span class="dv">35</span> <span class="sc">+</span> x <span class="sc">*</span> .<span class="dv">5</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb177-3"><a href="#cb177-3" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb177-4"><a href="#cb177-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> x, <span class="at">y =</span> probability)) <span class="sc">+</span></span>
+<span id="cb177-5"><a href="#cb177-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_rect</span>(<span class="at">xmin =</span> <span class="sc">-</span><span class="dv">1</span>, <span class="at">xmax =</span> <span class="dv">3</span>,</span>
+<span id="cb177-6"><a href="#cb177-6" aria-hidden="true" tabindex="-1"></a>            <span class="at">ymin =</span> <span class="dv">0</span>,  <span class="at">ymax =</span> <span class="dv">1</span>,</span>
+<span id="cb177-7"><a href="#cb177-7" aria-hidden="true" tabindex="-1"></a>            <span class="at">fill =</span> <span class="fu">met.brewer</span>(<span class="st">"Hiroshige"</span>)[<span class="dv">6</span>]) <span class="sc">+</span></span>
+<span id="cb177-8"><a href="#cb177-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_hline</span>(<span class="at">yintercept =</span> <span class="dv">0</span><span class="sc">:</span><span class="dv">1</span>, <span class="at">linetype =</span> <span class="dv">2</span>, <span class="at">color =</span> <span class="fu">met.brewer</span>(<span class="st">"Hiroshige"</span>)[<span class="dv">5</span>]) <span class="sc">+</span></span>
+<span id="cb177-9"><a href="#cb177-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>(<span class="fu">aes</span>(<span class="at">linetype =</span> probability <span class="sc">&gt;</span> <span class="dv">1</span>, <span class="at">color =</span> probability <span class="sc">&gt;</span> <span class="dv">1</span>),</span>
+<span id="cb177-10"><a href="#cb177-10" aria-hidden="true" tabindex="-1"></a>            <span class="at">size =</span> <span class="dv">1</span>) <span class="sc">+</span></span>
+<span id="cb177-11"><a href="#cb177-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_segment</span>(<span class="at">x =</span> <span class="fl">1.3</span>, <span class="at">xend =</span> <span class="dv">3</span>,</span>
+<span id="cb177-12"><a href="#cb177-12" aria-hidden="true" tabindex="-1"></a>               <span class="at">y =</span> <span class="dv">1</span>, <span class="at">yend =</span> <span class="dv">1</span>,</span>
+<span id="cb177-13"><a href="#cb177-13" aria-hidden="true" tabindex="-1"></a>               <span class="at">size =</span> <span class="dv">2</span><span class="sc">/</span><span class="dv">3</span>, <span class="at">color =</span> <span class="fu">met.brewer</span>(<span class="st">"Hiroshige"</span>)[<span class="dv">3</span>]) <span class="sc">+</span></span>
+<span id="cb177-14"><a href="#cb177-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">annotate</span>(<span class="at">geom =</span> <span class="st">"text"</span>,</span>
+<span id="cb177-15"><a href="#cb177-15" aria-hidden="true" tabindex="-1"></a>           <span class="at">x =</span> <span class="fl">1.28</span>, <span class="at">y =</span> <span class="fl">1.04</span>, <span class="at">hjust =</span> <span class="dv">1</span>,</span>
+<span id="cb177-16"><a href="#cb177-16" aria-hidden="true" tabindex="-1"></a>           <span class="at">label =</span> <span class="st">"This is why we need link functions"</span>,</span>
+<span id="cb177-17"><a href="#cb177-17" aria-hidden="true" tabindex="-1"></a>           <span class="at">color =</span> <span class="fu">met.brewer</span>(<span class="st">"Hiroshige"</span>)[<span class="dv">4</span>], <span class="at">size =</span> <span class="fl">2.6</span>) <span class="sc">+</span> </span>
+<span id="cb177-18"><a href="#cb177-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_color_manual</span>(<span class="at">values =</span> <span class="fu">c</span>(<span class="fu">met.brewer</span>(<span class="st">"Hiroshige"</span>)[<span class="dv">3</span><span class="sc">:</span><span class="dv">4</span>])) <span class="sc">+</span></span>
+<span id="cb177-19"><a href="#cb177-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_y_continuous</span>(<span class="at">breaks =</span> <span class="fu">c</span>(<span class="dv">0</span>, .<span class="dv">5</span>, <span class="dv">1</span>)) <span class="sc">+</span></span>
+<span id="cb177-20"><a href="#cb177-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">coord_cartesian</span>(<span class="at">xlim =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">2</span>),</span>
+<span id="cb177-21"><a href="#cb177-21" aria-hidden="true" tabindex="-1"></a>                  <span class="at">ylim =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="fl">1.2</span>)) <span class="sc">+</span></span>
+<span id="cb177-22"><a href="#cb177-22" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">legend.position =</span> <span class="st">"none"</span>,</span>
+<span id="cb177-23"><a href="#cb177-23" aria-hidden="true" tabindex="-1"></a>        <span class="at">panel.background =</span> <span class="fu">element_rect</span>(<span class="at">fill =</span> <span class="fu">met.brewer</span>(<span class="st">"Hiroshige"</span>)[<span class="dv">7</span>]),</span>
+<span id="cb177-24"><a href="#cb177-24" aria-hidden="true" tabindex="-1"></a>        <span class="at">panel.grid =</span> <span class="fu">element_blank</span>())</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<p><img src="unimelb_statistical_rethinking_2023_files/figure-html/unnamed-chunk-134-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<p><span class="math inline">\(f^{-1}\)</span> is the inverse link function. The purpose of this is to undo the effect of the link function.</p>
+<p>What the computer is actually doing is this:</p>
+<p><span class="math inline">\(p_i = f^{-1}(\alpha + \beta_XX_i + B_ZZ_i)\)</span></p>
+<p>It undoes the transformation</p>
+<p><span class="math inline">\(~\)</span></p>
+<p><strong>The logit link</strong></p>
+<p>Bernoulli/binomial models often use the logit link.</p>
+<p>This is the <strong>log-odds</strong> of the event happening.</p>
+<p><span class="math inline">\(logit(p_i) = log \frac{p_i}{1 - p_i}\)</span></p>
+<p><span class="math inline">\(\frac{p_i}{1 - p_i}\)</span> is the odds</p>
+<p>Why do we take the log of the odds? It is the right transform to convert the real number line to the probability interval 0-1 without causing problems.</p>
+<ul>
+<li>This wording helps explain why we use the inverse function</li>
+</ul>
+<p>The logit function makes S curves or logistic curves. This is because they must bend and flatten at 0 and 1</p>
+<div class="cell">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb178"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb178-1"><a href="#cb178-1" aria-hidden="true" tabindex="-1"></a><span class="co"># first, we'll make data for the horizontal lines</span></span>
+<span id="cb178-2"><a href="#cb178-2" aria-hidden="true" tabindex="-1"></a>alpha <span class="ot">&lt;-</span> <span class="dv">0</span></span>
+<span id="cb178-3"><a href="#cb178-3" aria-hidden="true" tabindex="-1"></a>beta  <span class="ot">&lt;-</span> <span class="dv">4</span></span>
+<span id="cb178-4"><a href="#cb178-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb178-5"><a href="#cb178-5" aria-hidden="true" tabindex="-1"></a>lines <span class="ot">&lt;-</span></span>
+<span id="cb178-6"><a href="#cb178-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tibble</span>(<span class="at">x =</span> <span class="fu">seq</span>(<span class="at">from =</span> <span class="sc">-</span><span class="dv">1</span>, <span class="at">to =</span> <span class="dv">1</span>, <span class="at">by =</span> .<span class="dv">25</span>)) <span class="sc">%&gt;%</span> </span>
+<span id="cb178-7"><a href="#cb178-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="st">`</span><span class="at">log-odds</span><span class="st">`</span>  <span class="ot">=</span> alpha <span class="sc">+</span> x <span class="sc">*</span> beta,</span>
+<span id="cb178-8"><a href="#cb178-8" aria-hidden="true" tabindex="-1"></a>         <span class="at">probability =</span> <span class="fu">exp</span>(alpha <span class="sc">+</span> x <span class="sc">*</span> beta) <span class="sc">/</span> (<span class="dv">1</span> <span class="sc">+</span> <span class="fu">exp</span>(alpha <span class="sc">+</span> x <span class="sc">*</span> beta)))</span>
+<span id="cb178-9"><a href="#cb178-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb178-10"><a href="#cb178-10" aria-hidden="true" tabindex="-1"></a><span class="co"># now we're ready to make the primary data</span></span>
+<span id="cb178-11"><a href="#cb178-11" aria-hidden="true" tabindex="-1"></a>beta  <span class="ot">&lt;-</span> <span class="dv">2</span></span>
+<span id="cb178-12"><a href="#cb178-12" aria-hidden="true" tabindex="-1"></a>d <span class="ot">&lt;-</span></span>
+<span id="cb178-13"><a href="#cb178-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tibble</span>(<span class="at">x =</span> <span class="fu">seq</span>(<span class="at">from =</span> <span class="sc">-</span><span class="fl">1.5</span>, <span class="at">to =</span> <span class="fl">1.5</span>, <span class="at">length.out =</span> <span class="dv">50</span>)) <span class="sc">%&gt;%</span> </span>
+<span id="cb178-14"><a href="#cb178-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="st">`</span><span class="at">log-odds</span><span class="st">`</span>  <span class="ot">=</span> alpha <span class="sc">+</span> x <span class="sc">*</span> beta,</span>
+<span id="cb178-15"><a href="#cb178-15" aria-hidden="true" tabindex="-1"></a>         <span class="at">probability =</span> <span class="fu">exp</span>(alpha <span class="sc">+</span> x <span class="sc">*</span> beta) <span class="sc">/</span> (<span class="dv">1</span> <span class="sc">+</span> <span class="fu">exp</span>(alpha <span class="sc">+</span> x <span class="sc">*</span> beta))) </span>
+<span id="cb178-16"><a href="#cb178-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb178-17"><a href="#cb178-17" aria-hidden="true" tabindex="-1"></a><span class="co"># now we make the individual plots</span></span>
+<span id="cb178-18"><a href="#cb178-18" aria-hidden="true" tabindex="-1"></a>p1 <span class="ot">&lt;-</span></span>
+<span id="cb178-19"><a href="#cb178-19" aria-hidden="true" tabindex="-1"></a>  d <span class="sc">%&gt;%</span> </span>
+<span id="cb178-20"><a href="#cb178-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> x, <span class="at">y =</span> <span class="st">`</span><span class="at">log-odds</span><span class="st">`</span>)) <span class="sc">+</span></span>
+<span id="cb178-21"><a href="#cb178-21" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_hline</span>(<span class="at">data =</span> lines,</span>
+<span id="cb178-22"><a href="#cb178-22" aria-hidden="true" tabindex="-1"></a>             <span class="fu">aes</span>(<span class="at">yintercept =</span> <span class="st">`</span><span class="at">log-odds</span><span class="st">`</span>),</span>
+<span id="cb178-23"><a href="#cb178-23" aria-hidden="true" tabindex="-1"></a>             <span class="at">color =</span> <span class="fu">met.brewer</span>(<span class="st">"Hiroshige"</span>)[<span class="dv">2</span>]) <span class="sc">+</span></span>
+<span id="cb178-24"><a href="#cb178-24" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>(<span class="at">size =</span> <span class="fl">1.5</span>, <span class="at">color =</span> <span class="fu">met.brewer</span>(<span class="st">"Hiroshige"</span>)[<span class="dv">7</span>]) <span class="sc">+</span></span>
+<span id="cb178-25"><a href="#cb178-25" aria-hidden="true" tabindex="-1"></a>  <span class="fu">coord_cartesian</span>(<span class="at">xlim =</span> <span class="fu">c</span>(<span class="sc">-</span><span class="dv">1</span>, <span class="dv">1</span>)) <span class="sc">+</span></span>
+<span id="cb178-26"><a href="#cb178-26" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">panel.background =</span> <span class="fu">element_rect</span>(<span class="at">fill =</span> <span class="fu">met.brewer</span>(<span class="st">"Hiroshige"</span>)[<span class="dv">5</span>]),</span>
+<span id="cb178-27"><a href="#cb178-27" aria-hidden="true" tabindex="-1"></a>        <span class="at">panel.grid =</span> <span class="fu">element_blank</span>())</span>
+<span id="cb178-28"><a href="#cb178-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb178-29"><a href="#cb178-29" aria-hidden="true" tabindex="-1"></a>p2 <span class="ot">&lt;-</span></span>
+<span id="cb178-30"><a href="#cb178-30" aria-hidden="true" tabindex="-1"></a>  d <span class="sc">%&gt;%</span> </span>
+<span id="cb178-31"><a href="#cb178-31" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> x, <span class="at">y =</span> probability)) <span class="sc">+</span></span>
+<span id="cb178-32"><a href="#cb178-32" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_hline</span>(<span class="at">data =</span> lines,</span>
+<span id="cb178-33"><a href="#cb178-33" aria-hidden="true" tabindex="-1"></a>             <span class="fu">aes</span>(<span class="at">yintercept =</span> probability),</span>
+<span id="cb178-34"><a href="#cb178-34" aria-hidden="true" tabindex="-1"></a>             <span class="at">color =</span> <span class="fu">met.brewer</span>(<span class="st">"Hiroshige"</span>)[<span class="dv">2</span>]) <span class="sc">+</span></span>
+<span id="cb178-35"><a href="#cb178-35" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>(<span class="at">size =</span> <span class="fl">1.5</span>, <span class="at">color =</span> <span class="fu">met.brewer</span>(<span class="st">"Hiroshige"</span>)[<span class="dv">7</span>]) <span class="sc">+</span></span>
+<span id="cb178-36"><a href="#cb178-36" aria-hidden="true" tabindex="-1"></a>  <span class="fu">coord_cartesian</span>(<span class="at">xlim =</span> <span class="fu">c</span>(<span class="sc">-</span><span class="dv">1</span>, <span class="dv">1</span>)) <span class="sc">+</span></span>
+<span id="cb178-37"><a href="#cb178-37" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">panel.background =</span> <span class="fu">element_rect</span>(<span class="at">fill =</span> <span class="fu">met.brewer</span>(<span class="st">"Hiroshige"</span>)[<span class="dv">5</span>]),</span>
+<span id="cb178-38"><a href="#cb178-38" aria-hidden="true" tabindex="-1"></a>        <span class="at">panel.grid =</span> <span class="fu">element_blank</span>())</span>
+<span id="cb178-39"><a href="#cb178-39" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb178-40"><a href="#cb178-40" aria-hidden="true" tabindex="-1"></a><span class="co"># finally, we're ready to mash the plots together and behold their nerdy glory</span></span>
+<span id="cb178-41"><a href="#cb178-41" aria-hidden="true" tabindex="-1"></a>(p1 <span class="sc">|</span> p2) <span class="sc">+</span></span>
+<span id="cb178-42"><a href="#cb178-42" aria-hidden="true" tabindex="-1"></a>  <span class="fu">plot_annotation</span>(<span class="at">subtitle =</span> <span class="st">"The logit link transforms a linear model (left) into a probability (right)."</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<p><img src="unimelb_statistical_rethinking_2023_files/figure-html/unnamed-chunk-135-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<p>How to read the log-odds scale:</p>
+<p>logit(p) = 0, p = 0.5 (happens half the time)</p>
+<p>logit(p) = 4, p = nearly always happens (very close to 1 odds)</p>
+<p>logit(p) = -4, p = nearly never happens (very close to 0 odds)</p>
+<p><span class="math inline">\(~\)</span></p>
+<p>Setting priors:</p>
+<ul>
+<li><p>We need to know what happens when we convert the prior distribution to the probability scale</p></li>
+<li><p>For , if we set wide priors we make the model assume that the event will either never or always happen</p></li>
+<li><p>If we set a prior of ~ Normal(0, 1) we start to get some skepticism of extreme values but not much! - See plot below</p></li>
+<li><p>For : to not assume very strong relationships we need something like: ~ Normal(0, 0.5)</p></li>
+</ul>
+<p><span class="math inline">\(~\)</span></p>
+<p>Lets look at how bad even Normal(0, 2) for an intercept prior is:</p>
+<div class="cell">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb179"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb179-1"><a href="#cb179-1" aria-hidden="true" tabindex="-1"></a><span class="fu">hist</span>(<span class="fu">rnorm</span>(<span class="dv">1000</span>, <span class="dv">0</span>, <span class="dv">2</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<p><img src="unimelb_statistical_rethinking_2023_files/figure-html/unnamed-chunk-136-1.png" class="img-fluid" width="672"></p>
+</div>
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb180"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb180-1"><a href="#cb180-1" aria-hidden="true" tabindex="-1"></a>data <span class="ot">&lt;-</span> <span class="fu">rnorm</span>(<span class="dv">1000</span>, <span class="dv">0</span>, <span class="dv">2</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb180-2"><a href="#cb180-2" aria-hidden="true" tabindex="-1"></a>  as_tibble <span class="sc">%&gt;%</span>  </span>
+<span id="cb180-3"><a href="#cb180-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">prob_space =</span> <span class="fu">inv_logit_scaled</span>(value)) </span>
+<span id="cb180-4"><a href="#cb180-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb180-5"><a href="#cb180-5" aria-hidden="true" tabindex="-1"></a>p1 <span class="ot">&lt;-</span> </span>
+<span id="cb180-6"><a href="#cb180-6" aria-hidden="true" tabindex="-1"></a>  data <span class="sc">%&gt;%</span> </span>
+<span id="cb180-7"><a href="#cb180-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> value)) <span class="sc">+</span></span>
+<span id="cb180-8"><a href="#cb180-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_histogram</span>() <span class="sc">+</span></span>
+<span id="cb180-9"><a href="#cb180-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">xlab</span>(<span class="st">"log-odds"</span>)</span>
+<span id="cb180-10"><a href="#cb180-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb180-11"><a href="#cb180-11" aria-hidden="true" tabindex="-1"></a>p2 <span class="ot">&lt;-</span> </span>
+<span id="cb180-12"><a href="#cb180-12" aria-hidden="true" tabindex="-1"></a>  data <span class="sc">%&gt;%</span> </span>
+<span id="cb180-13"><a href="#cb180-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> prob_space)) <span class="sc">+</span></span>
+<span id="cb180-14"><a href="#cb180-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_histogram</span>() <span class="sc">+</span></span>
+<span id="cb180-15"><a href="#cb180-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">xlab</span>(<span class="st">"probability"</span>)</span>
+<span id="cb180-16"><a href="#cb180-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb180-17"><a href="#cb180-17" aria-hidden="true" tabindex="-1"></a>p1 <span class="sc">+</span> p2</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<p><img src="unimelb_statistical_rethinking_2023_files/figure-html/unnamed-chunk-136-2.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<p><span class="math inline">\(~\)</span></p>
+</section>
+<section id="analysing-uc-berkelely-data" class="level2">
+<h2 class="anchored" data-anchor-id="analysing-uc-berkelely-data">Analysing UC Berkelely data</h2>
+<p><span class="math inline">\(~\)</span></p>
+<p>Look at the data again</p>
+<div class="cell">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb181"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb181-1"><a href="#cb181-1" aria-hidden="true" tabindex="-1"></a>UCB_admissions</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 12 × 5
+   dept  applicant.gender admit reject applications
+   &lt;fct&gt; &lt;fct&gt;            &lt;int&gt;  &lt;int&gt;        &lt;int&gt;
+ 1 A     male               512    313          825
+ 2 A     female              89     19          108
+ 3 B     male               353    207          560
+ 4 B     female              17      8           25
+ 5 C     male               120    205          325
+ 6 C     female             202    391          593
+ 7 D     male               138    279          417
+ 8 D     female             131    244          375
+ 9 E     male                53    138          191
+10 E     female              94    299          393
+11 F     male                22    351          373
+12 F     female              24    317          341</code></pre>
+</div>
+</div>
+<p>First we should talk about the difference between Bernoulli and Binomial regression.</p>
+<ul>
+<li><p>They are interchangeable from an inference perspective</p></li>
+<li><p>Bernoulli data is displayed as 0, 1 data, while binomial variables are aggregated counts of a bernoulli process.</p></li>
+</ul>
+<p>Note that the data above is aggregated, so we should specify a binomial distribution in our upcoming model</p>
+<p><strong>First let’s get the total effect of gender on admission acceptance</strong></p>
+<div class="cell">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb183"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb183-1"><a href="#cb183-1" aria-hidden="true" tabindex="-1"></a>UCB_admissions_model <span class="ot">&lt;-</span> </span>
+<span id="cb183-2"><a href="#cb183-2" aria-hidden="true" tabindex="-1"></a>   <span class="fu">brm</span>(<span class="at">data =</span> UCB_admissions, </span>
+<span id="cb183-3"><a href="#cb183-3" aria-hidden="true" tabindex="-1"></a>      <span class="at">family =</span> binomial,</span>
+<span id="cb183-4"><a href="#cb183-4" aria-hidden="true" tabindex="-1"></a>      admit <span class="sc">|</span> <span class="fu">trials</span>(applications) <span class="sc">~</span> <span class="dv">0</span> <span class="sc">+</span> applicant.gender,</span>
+<span id="cb183-5"><a href="#cb183-5" aria-hidden="true" tabindex="-1"></a>      <span class="at">prior =</span> <span class="fu">prior</span>(<span class="fu">normal</span>(<span class="dv">0</span>, <span class="dv">1</span>), <span class="at">class =</span> b),</span>
+<span id="cb183-6"><a href="#cb183-6" aria-hidden="true" tabindex="-1"></a>      <span class="at">iter =</span> <span class="dv">2000</span>, <span class="at">warmup =</span> <span class="dv">1000</span>, <span class="at">cores =</span> <span class="dv">3</span>, <span class="at">chains =</span> <span class="dv">3</span>,</span>
+<span id="cb183-7"><a href="#cb183-7" aria-hidden="true" tabindex="-1"></a>      <span class="at">seed =</span> <span class="dv">11</span>,</span>
+<span id="cb183-8"><a href="#cb183-8" aria-hidden="true" tabindex="-1"></a>      <span class="at">file =</span> <span class="st">"fits/UCB_admissions_model"</span>)</span>
+<span id="cb183-9"><a href="#cb183-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb183-10"><a href="#cb183-10" aria-hidden="true" tabindex="-1"></a>UCB_admissions_model</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code> Family: binomial 
+  Links: mu = logit 
+Formula: admit | trials(applications) ~ 0 + applicant.gender 
+   Data: UCB_admissions (Number of observations: 12) 
+  Draws: 3 chains, each with iter = 2000; warmup = 1000; thin = 1;
+         total post-warmup draws = 3000
+
+Population-Level Effects: 
+                       Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS
+applicant.genderfemale    -0.83      0.05    -0.93    -0.73 1.00     2481
+applicant.gendermale      -0.22      0.04    -0.29    -0.14 1.00     2387
+                       Tail_ESS
+applicant.genderfemale     2063
+applicant.gendermale       1968
+
+Draws were sampled using sampling(NUTS). For each parameter, Bulk_ESS
+and Tail_ESS are effective sample size measures, and Rhat is the potential
+scale reduction factor on split chains (at convergence, Rhat = 1).</code></pre>
+</div>
+</div>
+<p>Output tables suck when we have lots of parameters. Contrasts between treatment levels are far more informative.</p>
+<p>Let’s find the difference in admissions between genders</p>
+<div class="cell">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb185"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb185-1"><a href="#cb185-1" aria-hidden="true" tabindex="-1"></a>post <span class="ot">&lt;-</span> <span class="fu">as_draws_df</span>(UCB_admissions_model) <span class="sc">%&gt;%</span> </span>
+<span id="cb185-2"><a href="#cb185-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">f_mean =</span> <span class="fu">inv_logit_scaled</span>(b_applicant.genderfemale),</span>
+<span id="cb185-3"><a href="#cb185-3" aria-hidden="true" tabindex="-1"></a>         <span class="at">m_mean =</span> <span class="fu">inv_logit_scaled</span>(b_applicant.gendermale),</span>
+<span id="cb185-4"><a href="#cb185-4" aria-hidden="true" tabindex="-1"></a>         <span class="at">diff =</span> f_mean <span class="sc">-</span> m_mean)</span>
+<span id="cb185-5"><a href="#cb185-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb185-6"><a href="#cb185-6" aria-hidden="true" tabindex="-1"></a>post <span class="sc">%&gt;%</span> </span>
+<span id="cb185-7"><a href="#cb185-7" aria-hidden="true" tabindex="-1"></a>    <span class="co"># plot</span></span>
+<span id="cb185-8"><a href="#cb185-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> diff)) <span class="sc">+</span></span>
+<span id="cb185-9"><a href="#cb185-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_vline</span>(<span class="at">xintercept =</span> <span class="dv">0</span>, <span class="at">linetype =</span> <span class="dv">2</span>) <span class="sc">+</span></span>
+<span id="cb185-10"><a href="#cb185-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stat_halfeye</span>(<span class="at">point_interval =</span> median_qi, <span class="at">.width =</span> .<span class="dv">95</span>,</span>
+<span id="cb185-11"><a href="#cb185-11" aria-hidden="true" tabindex="-1"></a>               <span class="at">color =</span> <span class="st">"black"</span>,</span>
+<span id="cb185-12"><a href="#cb185-12" aria-hidden="true" tabindex="-1"></a>               <span class="at">fill =</span> <span class="fu">met.brewer</span>(<span class="st">"Hiroshige"</span>)[<span class="dv">4</span>]) <span class="sc">+</span></span>
+<span id="cb185-13"><a href="#cb185-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">" Mean effect of being female on application acceptance"</span>,</span>
+<span id="cb185-14"><a href="#cb185-14" aria-hidden="true" tabindex="-1"></a>       <span class="at">y =</span> <span class="cn">NULL</span>) <span class="sc">+</span></span>
+<span id="cb185-15"><a href="#cb185-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">coord_cartesian</span>(<span class="at">xlim =</span> <span class="fu">c</span>(<span class="sc">-</span><span class="fl">0.25</span>, <span class="dv">0</span>)) <span class="sc">+</span></span>
+<span id="cb185-16"><a href="#cb185-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">axis.ticks.y =</span> <span class="fu">element_blank</span>(),</span>
+<span id="cb185-17"><a href="#cb185-17" aria-hidden="true" tabindex="-1"></a>        <span class="at">legend.position =</span> <span class="st">"none"</span>) <span class="sc">+</span></span>
+<span id="cb185-18"><a href="#cb185-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_tidybayes</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<p><img src="unimelb_statistical_rethinking_2023_files/figure-html/unnamed-chunk-139-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<p><strong>Now lets estimate the direct effect</strong></p>
+<div class="cell">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb186"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb186-1"><a href="#cb186-1" aria-hidden="true" tabindex="-1"></a>UCB_admissions_model_direct <span class="ot">&lt;-</span> </span>
+<span id="cb186-2"><a href="#cb186-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">brm</span>(<span class="at">data =</span> UCB_admissions, </span>
+<span id="cb186-3"><a href="#cb186-3" aria-hidden="true" tabindex="-1"></a>      <span class="at">family =</span> binomial,</span>
+<span id="cb186-4"><a href="#cb186-4" aria-hidden="true" tabindex="-1"></a>      admit <span class="sc">|</span> <span class="fu">trials</span>(applications) <span class="sc">~</span> <span class="dv">1</span> <span class="sc">+</span> applicant.gender <span class="sc">*</span> dept,</span>
+<span id="cb186-5"><a href="#cb186-5" aria-hidden="true" tabindex="-1"></a>      <span class="at">prior =</span> <span class="fu">c</span>(<span class="fu">prior</span>(<span class="fu">normal</span>(<span class="dv">0</span>, <span class="dv">1</span>), <span class="at">class =</span> Intercept),</span>
+<span id="cb186-6"><a href="#cb186-6" aria-hidden="true" tabindex="-1"></a>                <span class="fu">prior</span>(<span class="fu">normal</span>(<span class="dv">0</span>, <span class="dv">1</span>), <span class="at">class =</span> b)),</span>
+<span id="cb186-7"><a href="#cb186-7" aria-hidden="true" tabindex="-1"></a>      <span class="at">iter =</span> <span class="dv">2000</span>, <span class="at">warmup =</span> <span class="dv">1000</span>, <span class="at">cores =</span> <span class="dv">3</span>, <span class="at">chains =</span> <span class="dv">3</span>,</span>
+<span id="cb186-8"><a href="#cb186-8" aria-hidden="true" tabindex="-1"></a>      <span class="at">seed =</span> <span class="dv">11</span>,</span>
+<span id="cb186-9"><a href="#cb186-9" aria-hidden="true" tabindex="-1"></a>      <span class="at">file =</span> <span class="st">"fits/UCB_admissions_model_direct"</span>)</span>
+<span id="cb186-10"><a href="#cb186-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb186-11"><a href="#cb186-11" aria-hidden="true" tabindex="-1"></a>UCB_admissions_model_direct</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code> Family: binomial 
+  Links: mu = logit 
+Formula: admit | trials(applications) ~ 1 + applicant.gender * dept 
+   Data: UCB_admissions (Number of observations: 12) 
+  Draws: 3 chains, each with iter = 2000; warmup = 1000; thin = 1;
+         total post-warmup draws = 3000
+
+Population-Level Effects: 
+                           Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS
+Intercept                      0.96      0.18     0.61     1.32 1.01      918
+applicant.gendermale          -0.46      0.19    -0.82    -0.09 1.01      885
+deptB                         -0.13      0.41    -0.89     0.68 1.00     1259
+deptC                         -1.61      0.20    -1.99    -1.22 1.01     1015
+deptD                         -1.56      0.21    -1.97    -1.15 1.01     1005
+deptE                         -2.08      0.21    -2.49    -1.67 1.01     1062
+deptF                         -3.41      0.25    -3.92    -2.92 1.01     1236
+applicant.gendermale:deptB     0.16      0.42    -0.66     0.92 1.00     1234
+applicant.gendermale:deptC     0.56      0.24     0.08     1.03 1.01     1127
+applicant.gendermale:deptD     0.35      0.24    -0.11     0.81 1.01     1070
+applicant.gendermale:deptE     0.60      0.26     0.08     1.10 1.01     1211
+applicant.gendermale:deptF     0.11      0.33    -0.56     0.73 1.01     1263
+                           Tail_ESS
+Intercept                      1252
+applicant.gendermale           1247
+deptB                          1628
+deptC                          1303
+deptD                          1300
+deptE                          1343
+deptF                          1646
+applicant.gendermale:deptB     1642
+applicant.gendermale:deptC     1528
+applicant.gendermale:deptD     1657
+applicant.gendermale:deptE     1570
+applicant.gendermale:deptF     1881
+
+Draws were sampled using sampling(NUTS). For each parameter, Bulk_ESS
+and Tail_ESS are effective sample size measures, and Rhat is the potential
+scale reduction factor on split chains (at convergence, Rhat = 1).</code></pre>
+</div>
+</div>
+<p>Let’s plot the distribution of the difference for each department</p>
+<div class="cell">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb188"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb188-1"><a href="#cb188-1" aria-hidden="true" tabindex="-1"></a>new_data <span class="ot">&lt;-</span> <span class="fu">expand_grid</span>(<span class="at">applications =</span> <span class="dv">1</span>, <span class="at">applicant.gender =</span> UCB_admissions<span class="sc">$</span>applicant.gender,</span>
+<span id="cb188-2"><a href="#cb188-2" aria-hidden="true" tabindex="-1"></a>                        <span class="at">dept =</span> UCB_admissions<span class="sc">$</span>dept) <span class="sc">%&gt;%</span></span>
+<span id="cb188-3"><a href="#cb188-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">distinct</span>() <span class="sc">%&gt;%</span> </span>
+<span id="cb188-4"><a href="#cb188-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">id =</span> <span class="fu">paste</span>(<span class="st">"V"</span>, <span class="dv">1</span><span class="sc">:</span><span class="dv">12</span>, <span class="at">sep =</span> <span class="st">""</span>)) </span>
+<span id="cb188-5"><a href="#cb188-5" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb188-6"><a href="#cb188-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb188-7"><a href="#cb188-7" aria-hidden="true" tabindex="-1"></a><span class="fu">as_tibble</span>(<span class="fu">fitted</span>(UCB_admissions_model_direct, <span class="at">newdata =</span> new_data, <span class="at">summary =</span> F)) <span class="sc">%&gt;%</span> </span>
+<span id="cb188-8"><a href="#cb188-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">posterior_draw =</span> <span class="dv">1</span><span class="sc">:</span><span class="fu">n</span>(),</span>
+<span id="cb188-9"><a href="#cb188-9" aria-hidden="true" tabindex="-1"></a>         <span class="at">dep_a_contrast =</span> V1 <span class="sc">-</span> V7,</span>
+<span id="cb188-10"><a href="#cb188-10" aria-hidden="true" tabindex="-1"></a>         <span class="at">dep_b_contrast =</span> V2 <span class="sc">-</span> V8,</span>
+<span id="cb188-11"><a href="#cb188-11" aria-hidden="true" tabindex="-1"></a>         <span class="at">dep_c_contrast =</span> V3 <span class="sc">-</span> V9,</span>
+<span id="cb188-12"><a href="#cb188-12" aria-hidden="true" tabindex="-1"></a>         <span class="at">dep_d_contrast =</span> V4 <span class="sc">-</span> V10,</span>
+<span id="cb188-13"><a href="#cb188-13" aria-hidden="true" tabindex="-1"></a>         <span class="at">dep_e_contrast =</span> V5 <span class="sc">-</span> V11,</span>
+<span id="cb188-14"><a href="#cb188-14" aria-hidden="true" tabindex="-1"></a>         <span class="at">dep_f_contrast =</span> V6 <span class="sc">-</span> V12) <span class="sc">%&gt;%</span></span>
+<span id="cb188-15"><a href="#cb188-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="fu">contains</span>(<span class="st">"contrast"</span>)) <span class="sc">%&gt;%</span> </span>
+<span id="cb188-16"><a href="#cb188-16" aria-hidden="true" tabindex="-1"></a>  tidyr<span class="sc">::</span><span class="fu">gather</span>(<span class="at">key =</span> id, <span class="at">value =</span> gender_contrast) <span class="sc">%&gt;%</span></span>
+<span id="cb188-17"><a href="#cb188-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">dep =</span> <span class="fu">str_remove</span>(id, <span class="st">"dep_"</span>),</span>
+<span id="cb188-18"><a href="#cb188-18" aria-hidden="true" tabindex="-1"></a>         <span class="at">dep =</span> <span class="fu">str_remove</span>(dep, <span class="st">"_contrast"</span>)) <span class="sc">%&gt;%</span> </span>
+<span id="cb188-19"><a href="#cb188-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb188-20"><a href="#cb188-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(dep, gender_contrast)) <span class="sc">+</span> </span>
+<span id="cb188-21"><a href="#cb188-21" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stat_halfeye</span>(<span class="fu">aes</span>(<span class="at">fill =</span> dep), <span class="at">.width =</span> <span class="fu">c</span>(<span class="fl">0.66</span>, <span class="fl">0.95</span>)) <span class="sc">+</span> <span class="co"># width indicates the uncertainty intervals: here we have 66% and 95% intervals</span></span>
+<span id="cb188-22"><a href="#cb188-22" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_fill_manual</span>(<span class="at">values =</span> <span class="fu">met.brewer</span>(<span class="st">"Monet"</span>)) <span class="sc">+</span></span>
+<span id="cb188-23"><a href="#cb188-23" aria-hidden="true" tabindex="-1"></a>  <span class="fu">coord_flip</span>(<span class="at">ylim =</span> <span class="fu">c</span>(<span class="sc">-</span><span class="fl">0.3</span>, <span class="fl">0.3</span>)) <span class="sc">+</span></span>
+<span id="cb188-24"><a href="#cb188-24" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_hline</span>(<span class="at">yintercept =</span> <span class="dv">0</span>, <span class="at">linetype =</span> <span class="dv">2</span>) <span class="sc">+</span></span>
+<span id="cb188-25"><a href="#cb188-25" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ylab</span>(<span class="st">"Gender constrast (probability)"</span>) <span class="sc">+</span></span>
+<span id="cb188-26"><a href="#cb188-26" aria-hidden="true" tabindex="-1"></a>  <span class="fu">xlab</span>(<span class="st">"Department"</span>) <span class="sc">+</span></span>
+<span id="cb188-27"><a href="#cb188-27" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>() <span class="sc">+</span> </span>
+<span id="cb188-28"><a href="#cb188-28" aria-hidden="true" tabindex="-1"></a>  <span class="fu">annotate</span>(<span class="st">"text"</span>, <span class="at">label =</span> <span class="st">"Women</span><span class="sc">\n</span><span class="st">advantaged"</span>,</span>
+<span id="cb188-29"><a href="#cb188-29" aria-hidden="true" tabindex="-1"></a>    <span class="at">x =</span> <span class="fl">6.5</span>, <span class="at">y =</span> <span class="sc">-</span><span class="fl">0.26</span>, <span class="at">size =</span> <span class="fl">4.2</span>, <span class="at">colour =</span> <span class="st">"black"</span>) <span class="sc">+</span></span>
+<span id="cb188-30"><a href="#cb188-30" aria-hidden="true" tabindex="-1"></a>    <span class="fu">annotate</span>(<span class="st">"text"</span>, <span class="at">label =</span> <span class="st">"Men</span><span class="sc">\n</span><span class="st">advantaged"</span>,</span>
+<span id="cb188-31"><a href="#cb188-31" aria-hidden="true" tabindex="-1"></a>    <span class="at">x =</span> <span class="fl">6.5</span>, <span class="at">y =</span> <span class="fl">0.26</span>, <span class="at">size =</span> <span class="fl">4.2</span>, <span class="at">colour =</span> <span class="st">"black"</span>) <span class="sc">+</span></span>
+<span id="cb188-32"><a href="#cb188-32" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">legend.position =</span> <span class="st">"none"</span>,</span>
+<span id="cb188-33"><a href="#cb188-33" aria-hidden="true" tabindex="-1"></a>        <span class="at">panel.grid.minor =</span> <span class="fu">element_blank</span>())</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<p><img src="unimelb_statistical_rethinking_2023_files/figure-html/unnamed-chunk-141-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<p>There is one department where women are advantaged over men, but none where men and advantaged. The 14% penalty found in the total effect has disappeared</p>
+<p><span class="math inline">\(~\)</span></p>
+</section>
+<section id="survival-analysis-bonus" class="level2">
+<h2 class="anchored" data-anchor-id="survival-analysis-bonus">Survival analysis bonus</h2>
+<p><span class="math inline">\(~\)</span></p>
+<p>Survival analysis is a form of count model. Once again the parameters are about rates.</p>
+<p>What to do with data that wasn’t counted? i.e.&nbsp;you have some data you were collecting that did not reach the end point e.g.&nbsp;a cat escaped before it was adopted, a fly line was undone by a mistake rather than an extinction event.</p>
+<p>We can tackle this with <strong>censoring</strong>:</p>
+<ul>
+<li><p>Left censoring: don’t know when time started</p></li>
+<li><p>Right censoring: something cut observation off before the event occurred</p></li>
+</ul>
+<p>Censoring matters because we bias our data by dropping the data e.g.&nbsp;imagine estimating PhD time to completion but leaving out all the drop-outs</p>
+<p><strong>Example: cat adoptions</strong>:</p>
+<div class="cell">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb189"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb189-1"><a href="#cb189-1" aria-hidden="true" tabindex="-1"></a><span class="fu">data</span>(AustinCats, <span class="at">package =</span> <span class="st">"rethinking"</span>)</span>
+<span id="cb189-2"><a href="#cb189-2" aria-hidden="true" tabindex="-1"></a>cat_data <span class="ot">&lt;-</span> <span class="fu">as_tibble</span>(AustinCats)</span>
+<span id="cb189-3"><a href="#cb189-3" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span>(AustinCats)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
+<ul>
+<li><p>20,000 cats</p></li>
+<li><p>Time to event (out-event) - most cats were adopted</p></li>
+<li><p>Event either 1 (adopted) or 2 (something else - death, escape, censored - the cat is still not adopted at time of data download)</p></li>
+<li><p>Cat colour is also known</p></li>
+</ul>
+<p>Data distributions we can use:</p>
+<p>Exponential:</p>
+<div class="callout-tip callout callout-style-default callout-captioned">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-caption-container flex-fill">
+From McElreath
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>“It is a fundamental distribution of distance and duration, kinds of measurements that represent displacement from some point of reference, either in time or space. If the probability of an event is constant in time or across space, then the distribution of events tends towards exponential. The exponential distribution has maximum entropy among all non-negative continuous distributions with the same average displacement.” (p.&nbsp;314).</p>
+</div>
+</div>
+<ul>
+<li><p>The rate of decay is constant e.g.&nbsp;like nuclear decay with half-lives</p></li>
+<li><p>Log-link</p></li>
+</ul>
+<p><span class="math inline">\(f(y) = \lambda e^{-\lambda y}\)</span></p>
+<p>Where y is a non-negative continuous variable and is called the rate.</p>
+<p>Importantly, the mean of the exponential distribution is the inverse of the rate:</p>
+<p><span class="math inline">\(E[y] = \frac{1}{\lambda}\)</span></p>
+<p>This is important because it is how <code>brms</code> parameterises exponential models.</p>
+<p>Lets get the data ready to use:</p>
+<div class="cell">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb190"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb190-1"><a href="#cb190-1" aria-hidden="true" tabindex="-1"></a>cat_data <span class="ot">&lt;-</span> cat_data <span class="sc">%&gt;%</span> </span>
+<span id="cb190-2"><a href="#cb190-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">black =</span> <span class="fu">if_else</span>(color <span class="sc">==</span> <span class="st">"Black"</span>, <span class="st">"black"</span>, <span class="st">"other"</span>),</span>
+<span id="cb190-3"><a href="#cb190-3" aria-hidden="true" tabindex="-1"></a>         <span class="at">adopted  =</span> <span class="fu">ifelse</span>(out_event <span class="sc">==</span> <span class="st">"Adoption"</span>, <span class="dv">1</span>, <span class="dv">0</span>),</span>
+<span id="cb190-4"><a href="#cb190-4" aria-hidden="true" tabindex="-1"></a>         <span class="at">censored =</span> <span class="fu">ifelse</span>(out_event <span class="sc">!=</span> <span class="st">"Adoption"</span>, <span class="dv">1</span>, <span class="dv">0</span>)) </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
+<p>How are the two events distributed i.e.&nbsp;adoption versus censor</p>
+<div class="cell">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb191"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb191-1"><a href="#cb191-1" aria-hidden="true" tabindex="-1"></a>cat_data <span class="sc">%&gt;%</span> </span>
+<span id="cb191-2"><a href="#cb191-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">censored =</span> <span class="fu">factor</span>(censored)) <span class="sc">%&gt;%</span> </span>
+<span id="cb191-3"><a href="#cb191-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(days_to_event <span class="sc">&lt;</span> <span class="dv">300</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb191-4"><a href="#cb191-4" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb191-5"><a href="#cb191-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> days_to_event, <span class="at">y =</span> censored)) <span class="sc">+</span></span>
+<span id="cb191-6"><a href="#cb191-6" aria-hidden="true" tabindex="-1"></a>  <span class="co"># let's just mark off the 50% intervals</span></span>
+<span id="cb191-7"><a href="#cb191-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stat_halfeye</span>(<span class="at">.width =</span> .<span class="dv">5</span>, <span class="at">fill =</span> <span class="fu">met.brewer</span>(<span class="st">"Hokusai2"</span>)[<span class="dv">2</span>], <span class="at">height =</span> <span class="dv">4</span>) <span class="sc">+</span></span>
+<span id="cb191-8"><a href="#cb191-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_y_discrete</span>(<span class="cn">NULL</span>, <span class="at">labels =</span> <span class="fu">c</span>(<span class="st">"censored == 0"</span>, <span class="st">"censored == 1"</span>)) <span class="sc">+</span></span>
+<span id="cb191-9"><a href="#cb191-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">coord_cartesian</span>(<span class="at">ylim =</span> <span class="fu">c</span>(<span class="fl">1.5</span>, <span class="fl">5.1</span>)) <span class="sc">+</span></span>
+<span id="cb191-10"><a href="#cb191-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">axis.ticks.y =</span> <span class="fu">element_blank</span>()) <span class="sc">+</span></span>
+<span id="cb191-11"><a href="#cb191-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_tidybayes</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<p><img src="unimelb_statistical_rethinking_2023_files/figure-html/unnamed-chunk-144-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<p>Do note there is a very long right tail that we’ve cut off for the sake of the plot. Anyway, the point of this plot is to show that the distribution for our primary variable, days_to_event, looks very different conditional on whether the data were censored. As McElreath covered in the lecture, we definitely don’t want to lose that information by excluding the censored cases from the analysis.</p>
+<p>Fit the model</p>
+<div class="cell">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb192"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb192-1"><a href="#cb192-1" aria-hidden="true" tabindex="-1"></a>b11<span class="fl">.15</span> <span class="ot">&lt;-</span></span>
+<span id="cb192-2"><a href="#cb192-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">brm</span>(<span class="at">data =</span> cat_data,</span>
+<span id="cb192-3"><a href="#cb192-3" aria-hidden="true" tabindex="-1"></a>      <span class="at">family =</span> exponential,</span>
+<span id="cb192-4"><a href="#cb192-4" aria-hidden="true" tabindex="-1"></a>      days_to_event <span class="sc">|</span> <span class="fu">cens</span>(censored) <span class="sc">~</span> <span class="dv">0</span> <span class="sc">+</span> black,</span>
+<span id="cb192-5"><a href="#cb192-5" aria-hidden="true" tabindex="-1"></a>      <span class="fu">prior</span>(<span class="fu">normal</span>(<span class="dv">0</span>, <span class="dv">1</span>), <span class="at">class =</span> b),</span>
+<span id="cb192-6"><a href="#cb192-6" aria-hidden="true" tabindex="-1"></a>      <span class="at">iter =</span> <span class="dv">2000</span>, <span class="at">warmup =</span> <span class="dv">1000</span>, <span class="at">chains =</span> <span class="dv">4</span>, <span class="at">cores =</span> <span class="dv">4</span>,</span>
+<span id="cb192-7"><a href="#cb192-7" aria-hidden="true" tabindex="-1"></a>      <span class="at">seed =</span> <span class="dv">11</span>,</span>
+<span id="cb192-8"><a href="#cb192-8" aria-hidden="true" tabindex="-1"></a>      <span class="at">file =</span> <span class="st">"fits/b11.15"</span>)</span>
+<span id="cb192-9"><a href="#cb192-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb192-10"><a href="#cb192-10" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(b11<span class="fl">.15</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code> Family: exponential 
+  Links: mu = log 
+Formula: days_to_event | cens(censored) ~ 0 + black 
+   Data: cat_data (Number of observations: 22356) 
+  Draws: 4 chains, each with iter = 2000; warmup = 1000; thin = 1;
+         total post-warmup draws = 4000
+
+Population-Level Effects: 
+           Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+blackblack     4.05      0.03     4.00     4.10 1.00     3122     2128
+blackother     3.88      0.01     3.86     3.90 1.00     2925     2466
+
+Draws were sampled using sampling(NUTS). For each parameter, Bulk_ESS
+and Tail_ESS are effective sample size measures, and Rhat is the potential
+scale reduction factor on split chains (at convergence, Rhat = 1).</code></pre>
+</div>
+</div>
+<p>Since we modelled <span class="math inline">\(log \mu_{i}\)</span>, we need to transform our parameters back into the metric using the formula:</p>
+<p><span class="math inline">\(log \mu = \alpha_{black}\)</span>, <span class="math inline">\(\lambda = 1 / \mu\)</span> <span class="math inline">\(\lambda_{black} = 1 / exp(\alpha_{black})\)</span></p>
+<p>Like so</p>
+<div class="cell">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb194"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb194-1"><a href="#cb194-1" aria-hidden="true" tabindex="-1"></a><span class="dv">1</span> <span class="sc">/</span> <span class="fu">exp</span>(<span class="fu">fixef</span>(b11<span class="fl">.15</span>)[, <span class="sc">-</span><span class="dv">2</span>])</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>             Estimate       Q2.5      Q97.5
+blackblack 0.01740956 0.01834988 0.01654450
+blackother 0.02065263 0.02106332 0.02026317</code></pre>
+</div>
+</div>
+<p>Still struggling? Let’s plot</p>
+<div class="cell">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb196"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb196-1"><a href="#cb196-1" aria-hidden="true" tabindex="-1"></a><span class="co"># annotation</span></span>
+<span id="cb196-2"><a href="#cb196-2" aria-hidden="true" tabindex="-1"></a>text <span class="ot">&lt;-</span></span>
+<span id="cb196-3"><a href="#cb196-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tibble</span>(<span class="at">color =</span> <span class="fu">c</span>(<span class="st">"black"</span>, <span class="st">"other"</span>),</span>
+<span id="cb196-4"><a href="#cb196-4" aria-hidden="true" tabindex="-1"></a>         <span class="at">days  =</span> <span class="fu">c</span>(<span class="dv">40</span>, <span class="dv">34</span>),</span>
+<span id="cb196-5"><a href="#cb196-5" aria-hidden="true" tabindex="-1"></a>         <span class="at">p     =</span> <span class="fu">c</span>(.<span class="dv">55</span>, .<span class="dv">45</span>),</span>
+<span id="cb196-6"><a href="#cb196-6" aria-hidden="true" tabindex="-1"></a>         <span class="at">label =</span> <span class="fu">c</span>(<span class="st">"black cats"</span>, <span class="st">"other cats"</span>),</span>
+<span id="cb196-7"><a href="#cb196-7" aria-hidden="true" tabindex="-1"></a>         <span class="at">hjust =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">1</span>))</span>
+<span id="cb196-8"><a href="#cb196-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb196-9"><a href="#cb196-9" aria-hidden="true" tabindex="-1"></a><span class="co"># wrangle</span></span>
+<span id="cb196-10"><a href="#cb196-10" aria-hidden="true" tabindex="-1"></a>f <span class="ot">&lt;-</span></span>
+<span id="cb196-11"><a href="#cb196-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">fixef</span>(b11<span class="fl">.15</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb196-12"><a href="#cb196-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">data.frame</span>() <span class="sc">%&gt;%</span> </span>
+<span id="cb196-13"><a href="#cb196-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rownames_to_column</span>() <span class="sc">%&gt;%</span> </span>
+<span id="cb196-14"><a href="#cb196-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">color =</span> <span class="fu">str_remove</span>(rowname, <span class="st">"black"</span>)) <span class="sc">%&gt;%</span> </span>
+<span id="cb196-15"><a href="#cb196-15" aria-hidden="true" tabindex="-1"></a>  <span class="co"># most important step. We predict over 100 days, assuming a constant rate of decline</span></span>
+<span id="cb196-16"><a href="#cb196-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">expand</span>(<span class="fu">nesting</span>(Estimate, Q2<span class="fl">.5</span>, Q97<span class="fl">.5</span>, color), </span>
+<span id="cb196-17"><a href="#cb196-17" aria-hidden="true" tabindex="-1"></a>         <span class="at">days =</span> <span class="dv">0</span><span class="sc">:</span><span class="dv">100</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb196-18"><a href="#cb196-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">m  =</span> <span class="dv">1</span> <span class="sc">-</span> <span class="fu">pexp</span>(days, <span class="at">rate =</span> <span class="dv">1</span> <span class="sc">/</span> <span class="fu">exp</span>(Estimate)),</span>
+<span id="cb196-19"><a href="#cb196-19" aria-hidden="true" tabindex="-1"></a>         <span class="at">ll =</span> <span class="dv">1</span> <span class="sc">-</span> <span class="fu">pexp</span>(days, <span class="at">rate =</span> <span class="dv">1</span> <span class="sc">/</span> <span class="fu">exp</span>(Q2<span class="fl">.5</span>)),</span>
+<span id="cb196-20"><a href="#cb196-20" aria-hidden="true" tabindex="-1"></a>         <span class="at">ul =</span> <span class="dv">1</span> <span class="sc">-</span> <span class="fu">pexp</span>(days, <span class="at">rate =</span> <span class="dv">1</span> <span class="sc">/</span> <span class="fu">exp</span>(Q97<span class="fl">.5</span>)))</span>
+<span id="cb196-21"><a href="#cb196-21" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb196-22"><a href="#cb196-22" aria-hidden="true" tabindex="-1"></a><span class="co"># plot!</span></span>
+<span id="cb196-23"><a href="#cb196-23" aria-hidden="true" tabindex="-1"></a>f <span class="sc">%&gt;%</span> </span>
+<span id="cb196-24"><a href="#cb196-24" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> days)) <span class="sc">+</span></span>
+<span id="cb196-25"><a href="#cb196-25" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_hline</span>(<span class="at">yintercept =</span> .<span class="dv">5</span>, <span class="at">linetype =</span> <span class="dv">3</span>, <span class="at">color =</span> <span class="fu">met.brewer</span>(<span class="st">"Hokusai2"</span>)[<span class="dv">2</span>]) <span class="sc">+</span></span>
+<span id="cb196-26"><a href="#cb196-26" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_ribbon</span>(<span class="fu">aes</span>(<span class="at">ymin =</span> ll, <span class="at">ymax =</span> ul, <span class="at">fill =</span> color),</span>
+<span id="cb196-27"><a href="#cb196-27" aria-hidden="true" tabindex="-1"></a>              <span class="at">alpha =</span> <span class="dv">1</span><span class="sc">/</span><span class="dv">2</span>) <span class="sc">+</span></span>
+<span id="cb196-28"><a href="#cb196-28" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>(<span class="fu">aes</span>(<span class="at">y =</span> m, <span class="at">color =</span> color)) <span class="sc">+</span></span>
+<span id="cb196-29"><a href="#cb196-29" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_text</span>(<span class="at">data =</span> text,</span>
+<span id="cb196-30"><a href="#cb196-30" aria-hidden="true" tabindex="-1"></a>            <span class="fu">aes</span>(<span class="at">y =</span> p, <span class="at">label =</span> label, <span class="at">hjust =</span> hjust, <span class="at">color =</span> color),</span>
+<span id="cb196-31"><a href="#cb196-31" aria-hidden="true" tabindex="-1"></a>            <span class="at">family =</span> <span class="st">"Times"</span>) <span class="sc">+</span></span>
+<span id="cb196-32"><a href="#cb196-32" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_fill_manual</span>(<span class="at">values =</span> <span class="fu">met.brewer</span>(<span class="st">"Hokusai2"</span>)[<span class="fu">c</span>(<span class="dv">4</span>, <span class="dv">1</span>)], <span class="at">breaks =</span> <span class="cn">NULL</span>) <span class="sc">+</span></span>
+<span id="cb196-33"><a href="#cb196-33" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_color_manual</span>(<span class="at">values =</span> <span class="fu">met.brewer</span>(<span class="st">"Hokusai2"</span>)[<span class="fu">c</span>(<span class="dv">4</span>, <span class="dv">1</span>)], <span class="at">breaks =</span> <span class="cn">NULL</span>) <span class="sc">+</span></span>
+<span id="cb196-34"><a href="#cb196-34" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_y_continuous</span>(<span class="st">"proportion remaining"</span>, <span class="at">breaks =</span> <span class="fu">c</span>(<span class="dv">0</span>, .<span class="dv">5</span>, <span class="dv">1</span>), <span class="at">limits =</span> <span class="dv">0</span><span class="sc">:</span><span class="dv">1</span>) <span class="sc">+</span></span>
+<span id="cb196-35"><a href="#cb196-35" aria-hidden="true" tabindex="-1"></a>  <span class="fu">xlab</span>(<span class="st">"days to adoption"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<p><img src="unimelb_statistical_rethinking_2023_files/figure-html/unnamed-chunk-147-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<p>Another way to explore this model is to ask: About how many days would it take for half of the cats of a given colour to be adopted? We can do this with help from the <code>qexp()</code> function. For example:</p>
+<div class="cell">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb197"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb197-1"><a href="#cb197-1" aria-hidden="true" tabindex="-1"></a><span class="co"># wrangle</span></span>
+<span id="cb197-2"><a href="#cb197-2" aria-hidden="true" tabindex="-1"></a>post <span class="ot">&lt;-</span></span>
+<span id="cb197-3"><a href="#cb197-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">posterior_samples</span>(b11<span class="fl">.15</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb197-4"><a href="#cb197-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_longer</span>(<span class="fu">starts_with</span>(<span class="st">"b_"</span>)) <span class="sc">%&gt;%</span> </span>
+<span id="cb197-5"><a href="#cb197-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">color =</span> <span class="fu">str_remove</span>(name, <span class="st">"b_black"</span>),</span>
+<span id="cb197-6"><a href="#cb197-6" aria-hidden="true" tabindex="-1"></a>         <span class="at">days  =</span> <span class="fu">qexp</span>(<span class="at">p =</span> .<span class="dv">5</span>, <span class="at">rate =</span> <span class="dv">1</span> <span class="sc">/</span> <span class="fu">exp</span>(value))) </span>
+<span id="cb197-7"><a href="#cb197-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb197-8"><a href="#cb197-8" aria-hidden="true" tabindex="-1"></a><span class="co"># axis breaks</span></span>
+<span id="cb197-9"><a href="#cb197-9" aria-hidden="true" tabindex="-1"></a>medians <span class="ot">&lt;-</span></span>
+<span id="cb197-10"><a href="#cb197-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(post, color) <span class="sc">%&gt;%</span> </span>
+<span id="cb197-11"><a href="#cb197-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="at">med =</span> <span class="fu">median</span>(days)) <span class="sc">%&gt;%</span> </span>
+<span id="cb197-12"><a href="#cb197-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pull</span>(med) <span class="sc">%&gt;%</span> </span>
+<span id="cb197-13"><a href="#cb197-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">round</span>(., <span class="at">digits =</span> <span class="dv">1</span>)</span>
+<span id="cb197-14"><a href="#cb197-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb197-15"><a href="#cb197-15" aria-hidden="true" tabindex="-1"></a><span class="co"># plot!</span></span>
+<span id="cb197-16"><a href="#cb197-16" aria-hidden="true" tabindex="-1"></a>post <span class="sc">%&gt;%</span> </span>
+<span id="cb197-17"><a href="#cb197-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> days, <span class="at">y =</span> color)) <span class="sc">+</span></span>
+<span id="cb197-18"><a href="#cb197-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stat_halfeye</span>(<span class="at">.width =</span> .<span class="dv">95</span>, <span class="at">fill =</span> <span class="fu">met.brewer</span>(<span class="st">"Hokusai2"</span>)[<span class="dv">2</span>], <span class="at">height =</span> <span class="dv">4</span>) <span class="sc">+</span></span>
+<span id="cb197-19"><a href="#cb197-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_x_continuous</span>(<span class="st">"days untill 50% are adopted"</span>,</span>
+<span id="cb197-20"><a href="#cb197-20" aria-hidden="true" tabindex="-1"></a>                     <span class="at">breaks =</span> <span class="fu">c</span>(<span class="dv">30</span>, medians, <span class="dv">45</span>), <span class="at">labels =</span> <span class="fu">c</span>(<span class="st">"30"</span>, medians, <span class="st">"45"</span>),</span>
+<span id="cb197-21"><a href="#cb197-21" aria-hidden="true" tabindex="-1"></a>                     <span class="at">limits =</span> <span class="fu">c</span>(<span class="dv">30</span>, <span class="dv">45</span>)) <span class="sc">+</span></span>
+<span id="cb197-22"><a href="#cb197-22" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ylab</span>(<span class="cn">NULL</span>) <span class="sc">+</span></span>
+<span id="cb197-23"><a href="#cb197-23" aria-hidden="true" tabindex="-1"></a>  <span class="fu">coord_cartesian</span>(<span class="at">ylim =</span> <span class="fu">c</span>(<span class="fl">1.5</span>, <span class="fl">5.1</span>)) <span class="sc">+</span></span>
+<span id="cb197-24"><a href="#cb197-24" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">axis.ticks.y =</span> <span class="fu">element_blank</span>())</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<p><img src="unimelb_statistical_rethinking_2023_files/figure-html/unnamed-chunk-148-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<p>The model suggests it takes about six days longer for the half of the black cats to be adopted.</p>
+<p><span class="math inline">\(~\)</span></p>
+</section>
+</section>
+<section id="lecture-10-counts-and-confounds" class="level1">
+<h1>Lecture 10: Counts and Confounds</h1>
+<hr>
+<p><span class="math inline">\(~\)</span></p>
+<p>Linear models: expected value is additive (linear) combination of parameters. What you see is what you get.</p>
+<p>Generalised linear models: these are like tide prediction models. They have many gears that are difficult to interpret. More formally, the expected value is <strong>some function</strong> of an additive combination of parameters. If we leave this expected value on the function scale, it means very little to the common man. We must strive to show the ‘tide prediction’.</p>
+<ul>
+<li><p>It is very important to note that uniform changes in the predictor <strong>do not</strong> lead to uniform changes in prediction. I.e. think of how values change on the log-odds scale.</p></li>
+<li><p>All predictor variables interact - if one predictor pushes the prediction towards 0 or 1 then the effect of other predictors will be smaller.</p></li>
+</ul>
+<p><span class="math inline">\(~\)</span></p>
+<section id="uc-berkeley-continued---confounded-admissions" class="level2">
+<h2 class="anchored" data-anchor-id="uc-berkeley-continued---confounded-admissions">UC Berkeley continued - Confounded admissions</h2>
+<p><span class="math inline">\(~\)</span></p>
+<div class="cell">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb198"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb198-1"><a href="#cb198-1" aria-hidden="true" tabindex="-1"></a>dag_coords <span class="ot">&lt;-</span></span>
+<span id="cb198-2"><a href="#cb198-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tibble</span>(<span class="at">name =</span> <span class="fu">c</span>(<span class="st">"G"</span>, <span class="st">"D"</span>, <span class="st">"A"</span>, <span class="st">"u"</span>),</span>
+<span id="cb198-3"><a href="#cb198-3" aria-hidden="true" tabindex="-1"></a>         <span class="at">x    =</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>, <span class="fl">3.2</span>),</span>
+<span id="cb198-4"><a href="#cb198-4" aria-hidden="true" tabindex="-1"></a>         <span class="at">y    =</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">1</span>, <span class="fl">2.2</span>))</span>
+<span id="cb198-5"><a href="#cb198-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb198-6"><a href="#cb198-6" aria-hidden="true" tabindex="-1"></a><span class="fu">dagify</span>(A <span class="sc">~</span> G <span class="sc">+</span> D <span class="sc">+</span> u,</span>
+<span id="cb198-7"><a href="#cb198-7" aria-hidden="true" tabindex="-1"></a>       D <span class="sc">~</span> G <span class="sc">+</span> u,</span>
+<span id="cb198-8"><a href="#cb198-8" aria-hidden="true" tabindex="-1"></a>       <span class="at">coords =</span> dag_coords) <span class="sc">%&gt;%</span></span>
+<span id="cb198-9"><a href="#cb198-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">gg_simple_dag</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<p><img src="unimelb_statistical_rethinking_2023_files/figure-html/unnamed-chunk-149-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<p>What if <span class="math inline">\(u\)</span>, the students ability affects both department choice and acceptance rate. We do not have this in our dataset, but it still may be present in our scientific model.</p>
+<p>Let’s simulate such a situation. Here are some general tips for simulation:</p>
+<ol type="1">
+<li><p>Simulate variables with no parents (they don’t depend on other variables)</p></li>
+<li><p>Simulate the values that require parents</p></li>
+</ol>
+<div class="cell">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb199"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb199-1"><a href="#cb199-1" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">17</span>)</span>
+<span id="cb199-2"><a href="#cb199-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb199-3"><a href="#cb199-3" aria-hidden="true" tabindex="-1"></a>N <span class="ot">&lt;-</span> <span class="dv">2000</span> <span class="co"># number of applicants</span></span>
+<span id="cb199-4"><a href="#cb199-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb199-5"><a href="#cb199-5" aria-hidden="true" tabindex="-1"></a><span class="co"># even gender distribution</span></span>
+<span id="cb199-6"><a href="#cb199-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb199-7"><a href="#cb199-7" aria-hidden="true" tabindex="-1"></a>G <span class="ot">&lt;-</span> <span class="fu">sample</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">2</span>, <span class="at">size =</span> N, <span class="at">replace =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb199-8"><a href="#cb199-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb199-9"><a href="#cb199-9" aria-hidden="true" tabindex="-1"></a><span class="co"># sample ability, high (1) to average (0)</span></span>
+<span id="cb199-10"><a href="#cb199-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb199-11"><a href="#cb199-11" aria-hidden="true" tabindex="-1"></a>u <span class="ot">&lt;-</span> rethinking<span class="sc">::</span><span class="fu">rbern</span>(N, <span class="fl">0.1</span>) </span>
+<span id="cb199-12"><a href="#cb199-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb199-13"><a href="#cb199-13" aria-hidden="true" tabindex="-1"></a><span class="co"># gender 1 tends to apply to department 1, 2 to 2</span></span>
+<span id="cb199-14"><a href="#cb199-14" aria-hidden="true" tabindex="-1"></a><span class="co"># also G =1 with greater ability tend to apply to 2 as well</span></span>
+<span id="cb199-15"><a href="#cb199-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb199-16"><a href="#cb199-16" aria-hidden="true" tabindex="-1"></a>D <span class="ot">&lt;-</span> rethinking<span class="sc">::</span><span class="fu">rbern</span>(N, <span class="fu">if_else</span>(G <span class="sc">==</span> <span class="dv">1</span>, u <span class="sc">*</span> <span class="dv">1</span>, <span class="fl">0.75</span>)) <span class="sc">+</span> <span class="dv">1</span> <span class="co"># individuals of high ability have a 50% chance of applying for department 2</span></span>
+<span id="cb199-17"><a href="#cb199-17" aria-hidden="true" tabindex="-1"></a><span class="co"># matrix of acceptance rates</span></span>
+<span id="cb199-18"><a href="#cb199-18" aria-hidden="true" tabindex="-1"></a>accept_rate_u0 <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="fu">c</span>(<span class="fl">0.1</span>, <span class="fl">0.1</span>, <span class="fl">0.1</span>, <span class="fl">0.3</span>), <span class="at">nrow =</span> <span class="dv">2</span>) <span class="co"># average ability, with discrimintation in dep 2</span></span>
+<span id="cb199-19"><a href="#cb199-19" aria-hidden="true" tabindex="-1"></a>accept_rate_u1 <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="fu">c</span>(<span class="fl">0.3</span>, <span class="fl">0.3</span>, <span class="fl">0.5</span>, <span class="fl">0.5</span>), <span class="at">nrow =</span> <span class="dv">2</span>) <span class="co"># high ability</span></span>
+<span id="cb199-20"><a href="#cb199-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb199-21"><a href="#cb199-21" aria-hidden="true" tabindex="-1"></a><span class="co"># simulate acceptance</span></span>
+<span id="cb199-22"><a href="#cb199-22" aria-hidden="true" tabindex="-1"></a>P <span class="ot">&lt;-</span> <span class="fu">sapply</span>(<span class="dv">1</span><span class="sc">:</span>N, <span class="cf">function</span>(i)</span>
+<span id="cb199-23"><a href="#cb199-23" aria-hidden="true" tabindex="-1"></a>  <span class="fu">if_else</span>(u[i] <span class="sc">==</span> <span class="dv">0</span>, accept_rate_u0[D[i], G[i]],</span>
+<span id="cb199-24"><a href="#cb199-24" aria-hidden="true" tabindex="-1"></a>          accept_rate_u1[D[i], G[i]] ))</span>
+<span id="cb199-25"><a href="#cb199-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb199-26"><a href="#cb199-26" aria-hidden="true" tabindex="-1"></a>A <span class="ot">&lt;-</span> rethinking<span class="sc">::</span><span class="fu">rbern</span>(N, P)</span>
+<span id="cb199-27"><a href="#cb199-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb199-28"><a href="#cb199-28" aria-hidden="true" tabindex="-1"></a>data_sim <span class="ot">&lt;-</span> <span class="fu">tibble</span>(<span class="at">Accepted =</span> A, <span class="at">Department =</span> <span class="fu">as.factor</span>(D), <span class="at">Gender =</span> <span class="fu">as.factor</span>(G))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
+<p>Model simulated data</p>
+<ol type="1">
+<li>The total effect of gender</li>
+</ol>
+<div class="cell">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb200"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb200-1"><a href="#cb200-1" aria-hidden="true" tabindex="-1"></a>UCB_admissions_model_ability <span class="ot">&lt;-</span> </span>
+<span id="cb200-2"><a href="#cb200-2" aria-hidden="true" tabindex="-1"></a>   <span class="fu">brm</span>(<span class="at">data =</span> data_sim, </span>
+<span id="cb200-3"><a href="#cb200-3" aria-hidden="true" tabindex="-1"></a>      <span class="at">family =</span> bernoulli,</span>
+<span id="cb200-4"><a href="#cb200-4" aria-hidden="true" tabindex="-1"></a>      Accepted <span class="sc">~</span> <span class="dv">0</span> <span class="sc">+</span> Gender,</span>
+<span id="cb200-5"><a href="#cb200-5" aria-hidden="true" tabindex="-1"></a>      <span class="at">prior =</span> <span class="fu">prior</span>(<span class="fu">normal</span>(<span class="dv">0</span>, <span class="dv">1</span>), <span class="at">class =</span> b),</span>
+<span id="cb200-6"><a href="#cb200-6" aria-hidden="true" tabindex="-1"></a>      <span class="at">iter =</span> <span class="dv">2000</span>, <span class="at">warmup =</span> <span class="dv">1000</span>, <span class="at">cores =</span> <span class="dv">3</span>, <span class="at">chains =</span> <span class="dv">3</span>,</span>
+<span id="cb200-7"><a href="#cb200-7" aria-hidden="true" tabindex="-1"></a>      <span class="at">seed =</span> <span class="dv">11</span>,</span>
+<span id="cb200-8"><a href="#cb200-8" aria-hidden="true" tabindex="-1"></a>      <span class="at">file =</span> <span class="st">"fits/UCB_admissions_model_ability"</span>)</span>
+<span id="cb200-9"><a href="#cb200-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb200-10"><a href="#cb200-10" aria-hidden="true" tabindex="-1"></a>UCB_admissions_model_ability</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code> Family: bernoulli 
+  Links: mu = logit 
+Formula: Accepted ~ 0 + Gender 
+   Data: data_sim (Number of observations: 2000) 
+  Draws: 3 chains, each with iter = 2000; warmup = 1000; thin = 1;
+         total post-warmup draws = 3000
+
+Population-Level Effects: 
+        Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+Gender1    -1.91      0.09    -2.09    -1.74 1.01     2500     1946
+Gender2    -1.09      0.07    -1.23    -0.95 1.00     2746     1836
+
+Draws were sampled using sampling(NUTS). For each parameter, Bulk_ESS
+and Tail_ESS are effective sample size measures, and Rhat is the potential
+scale reduction factor on split chains (at convergence, Rhat = 1).</code></pre>
+</div>
+</div>
+<p>This model gets the total effect of gender correct. Gender 1 is disadvantaged overall.</p>
+<ol start="2" type="1">
+<li>The direct effect of gender</li>
+</ol>
+<div class="cell">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb202"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb202-1"><a href="#cb202-1" aria-hidden="true" tabindex="-1"></a>UCB_admissions_model_ability_direct <span class="ot">&lt;-</span> </span>
+<span id="cb202-2"><a href="#cb202-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">brm</span>(<span class="at">data =</span> data_sim, </span>
+<span id="cb202-3"><a href="#cb202-3" aria-hidden="true" tabindex="-1"></a>      <span class="at">family =</span> bernoulli,</span>
+<span id="cb202-4"><a href="#cb202-4" aria-hidden="true" tabindex="-1"></a>      Accepted <span class="sc">~</span> <span class="dv">1</span> <span class="sc">+</span> Gender <span class="sc">*</span> Department,</span>
+<span id="cb202-5"><a href="#cb202-5" aria-hidden="true" tabindex="-1"></a>      <span class="at">prior =</span> <span class="fu">c</span>(<span class="fu">prior</span>(<span class="fu">normal</span>(<span class="dv">0</span>, <span class="dv">1</span>), <span class="at">class =</span> Intercept),</span>
+<span id="cb202-6"><a href="#cb202-6" aria-hidden="true" tabindex="-1"></a>                <span class="fu">prior</span>(<span class="fu">normal</span>(<span class="dv">0</span>, <span class="dv">1</span>), <span class="at">class =</span> b)),</span>
+<span id="cb202-7"><a href="#cb202-7" aria-hidden="true" tabindex="-1"></a>      <span class="at">iter =</span> <span class="dv">2000</span>, <span class="at">warmup =</span> <span class="dv">1000</span>, <span class="at">cores =</span> <span class="dv">3</span>, <span class="at">chains =</span> <span class="dv">3</span>,</span>
+<span id="cb202-8"><a href="#cb202-8" aria-hidden="true" tabindex="-1"></a>      <span class="at">seed =</span> <span class="dv">11</span>,</span>
+<span id="cb202-9"><a href="#cb202-9" aria-hidden="true" tabindex="-1"></a>      <span class="at">file =</span> <span class="st">"fits/UCB_admissions_model_ability_direct"</span>)</span>
+<span id="cb202-10"><a href="#cb202-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb202-11"><a href="#cb202-11" aria-hidden="true" tabindex="-1"></a>UCB_admissions_model_ability_direct</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code> Family: bernoulli 
+  Links: mu = logit 
+Formula: Accepted ~ 1 + Gender * Department 
+   Data: data_sim (Number of observations: 2000) 
+  Draws: 3 chains, each with iter = 2000; warmup = 1000; thin = 1;
+         total post-warmup draws = 3000
+
+Population-Level Effects: 
+                    Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+Intercept              -2.12      0.11    -2.33    -1.92 1.00     2287     2096
+Gender2                -0.28      0.24    -0.76     0.17 1.00     1786     1653
+Department2             1.24      0.23     0.79     1.70 1.00     1881     1772
+Gender2:Department2     0.35      0.32    -0.27     0.98 1.00     1529     1668
+
+Draws were sampled using sampling(NUTS). For each parameter, Bulk_ESS
+and Tail_ESS are effective sample size measures, and Rhat is the potential
+scale reduction factor on split chains (at convergence, Rhat = 1).</code></pre>
+</div>
+</div>
+<p>Model 2 is confounded. To show this we should look at the contrasts - don’t look at the gears!</p>
+<p>Plot the contrast</p>
+<div class="cell">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb204"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb204-1"><a href="#cb204-1" aria-hidden="true" tabindex="-1"></a>new_data <span class="ot">&lt;-</span> <span class="fu">expand_grid</span>(<span class="at">Gender =</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">2</span>),</span>
+<span id="cb204-2"><a href="#cb204-2" aria-hidden="true" tabindex="-1"></a>                        <span class="at">Department =</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">2</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb204-3"><a href="#cb204-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">id =</span> <span class="fu">paste</span>(<span class="st">"V"</span>, <span class="dv">1</span><span class="sc">:</span><span class="dv">4</span>, <span class="at">sep =</span> <span class="st">""</span>)) </span>
+<span id="cb204-4"><a href="#cb204-4" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb204-5"><a href="#cb204-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb204-6"><a href="#cb204-6" aria-hidden="true" tabindex="-1"></a><span class="fu">as_tibble</span>(<span class="fu">fitted</span>(UCB_admissions_model_ability_direct, <span class="at">newdata =</span> new_data, <span class="at">summary =</span> F)) <span class="sc">%&gt;%</span> </span>
+<span id="cb204-7"><a href="#cb204-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">posterior_draw =</span> <span class="dv">1</span><span class="sc">:</span><span class="fu">n</span>(),</span>
+<span id="cb204-8"><a href="#cb204-8" aria-hidden="true" tabindex="-1"></a>         <span class="at">dep_1_contrast =</span> V1 <span class="sc">-</span> V3,</span>
+<span id="cb204-9"><a href="#cb204-9" aria-hidden="true" tabindex="-1"></a>         <span class="at">dep_2_contrast =</span> V2 <span class="sc">-</span> V4) <span class="sc">%&gt;%</span></span>
+<span id="cb204-10"><a href="#cb204-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="fu">contains</span>(<span class="st">"contrast"</span>)) <span class="sc">%&gt;%</span> </span>
+<span id="cb204-11"><a href="#cb204-11" aria-hidden="true" tabindex="-1"></a>  tidyr<span class="sc">::</span><span class="fu">gather</span>(<span class="at">key =</span> id, <span class="at">value =</span> gender_contrast) <span class="sc">%&gt;%</span></span>
+<span id="cb204-12"><a href="#cb204-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">dep =</span> <span class="fu">str_remove</span>(id, <span class="st">"dep_"</span>),</span>
+<span id="cb204-13"><a href="#cb204-13" aria-hidden="true" tabindex="-1"></a>         <span class="at">dep =</span> <span class="fu">str_remove</span>(dep, <span class="st">"_contrast"</span>)) <span class="sc">%&gt;%</span> </span>
+<span id="cb204-14"><a href="#cb204-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb204-15"><a href="#cb204-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(dep, gender_contrast)) <span class="sc">+</span> </span>
+<span id="cb204-16"><a href="#cb204-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stat_halfeye</span>(<span class="fu">aes</span>(<span class="at">fill =</span> dep), <span class="at">.width =</span> <span class="fu">c</span>(<span class="fl">0.66</span>, <span class="fl">0.95</span>)) <span class="sc">+</span> <span class="co"># width indicates the uncertainty intervals: here we have 66% and 95% intervals</span></span>
+<span id="cb204-17"><a href="#cb204-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_fill_manual</span>(<span class="at">values =</span> <span class="fu">met.brewer</span>(<span class="st">"Monet"</span>)) <span class="sc">+</span></span>
+<span id="cb204-18"><a href="#cb204-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">coord_flip</span>() <span class="sc">+</span></span>
+<span id="cb204-19"><a href="#cb204-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_hline</span>(<span class="at">yintercept =</span> <span class="dv">0</span>, <span class="at">linetype =</span> <span class="dv">2</span>) <span class="sc">+</span></span>
+<span id="cb204-20"><a href="#cb204-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ylab</span>(<span class="st">"F-M constrast (probability)"</span>) <span class="sc">+</span></span>
+<span id="cb204-21"><a href="#cb204-21" aria-hidden="true" tabindex="-1"></a>  <span class="fu">xlab</span>(<span class="st">"Department"</span>) <span class="sc">+</span></span>
+<span id="cb204-22"><a href="#cb204-22" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>() <span class="sc">+</span> </span>
+<span id="cb204-23"><a href="#cb204-23" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">legend.position =</span> <span class="st">"none"</span>,</span>
+<span id="cb204-24"><a href="#cb204-24" aria-hidden="true" tabindex="-1"></a>        <span class="at">panel.grid.minor =</span> <span class="fu">element_blank</span>())</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<p><img src="unimelb_statistical_rethinking_2023_files/figure-html/unnamed-chunk-153-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<p>Return of the <strong>collider</strong>!!</p>
+<ul>
+<li><p>Stratifying by D opens non-causal path through u.</p></li>
+<li><p>This means we can’t estimate the direct effect of D or G</p></li>
+</ul>
+<p>What’s happening here is that Gender 1 individuals of high ability are willing to take on the risk of discrimination and apply for the discriminatory department. This creates a higher proportion of high ability G1s compared to G2s in that department. High ability compensates for discrimination and hides the discriminatory effect.</p>
+<p><span class="math inline">\(~\)</span></p>
+</section>
+<section id="sensitivity-analysis" class="level2">
+<h2 class="anchored" data-anchor-id="sensitivity-analysis">Sensitivity analysis</h2>
+<p><span class="math inline">\(~\)</span></p>
+<p><strong>What are the implications of what we don’t know?</strong></p>
+<ul>
+<li><p>Assume confound exists, model its consequences for different strengths/kinds of influences</p></li>
+<li><p>How strong must the confound be to change conclusions</p></li>
+<li><p>Wow</p></li>
+<li><p>You can vary the effect size of the confound to see what effect this has on the posterior</p></li>
+<li><p>This allows you to get a posterior estimate of an effect while controlling for an assumed confound. You just need to estimate a reasonable effect size for the confound.</p></li>
+</ul>
+<p><span class="math inline">\(~\)</span></p>
+<p>Fit a model with u added. Constrain the effect of u to be positive with a prior i.e.&nbsp;high ability only can have a positive effect on acceptance.</p>
+<div class="cell">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb205"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb205-1"><a href="#cb205-1" aria-hidden="true" tabindex="-1"></a>data_sim<span class="sc">$</span>u <span class="ot">&lt;-</span> u</span>
+<span id="cb205-2"><a href="#cb205-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb205-3"><a href="#cb205-3" aria-hidden="true" tabindex="-1"></a>UCB_admissions_model_ability_direct_u <span class="ot">&lt;-</span> </span>
+<span id="cb205-4"><a href="#cb205-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">brm</span>(<span class="at">data =</span> data_sim, </span>
+<span id="cb205-5"><a href="#cb205-5" aria-hidden="true" tabindex="-1"></a>      <span class="at">family =</span> bernoulli,</span>
+<span id="cb205-6"><a href="#cb205-6" aria-hidden="true" tabindex="-1"></a>      Accepted <span class="sc">~</span> <span class="dv">1</span> <span class="sc">+</span> Gender <span class="sc">*</span> Department <span class="sc">+</span> u,</span>
+<span id="cb205-7"><a href="#cb205-7" aria-hidden="true" tabindex="-1"></a>      <span class="at">prior =</span> <span class="fu">c</span>(<span class="fu">prior</span>(<span class="fu">normal</span>(<span class="dv">0</span>, <span class="dv">1</span>), <span class="at">class =</span> Intercept),</span>
+<span id="cb205-8"><a href="#cb205-8" aria-hidden="true" tabindex="-1"></a>                <span class="fu">prior</span>(<span class="fu">normal</span>(<span class="dv">0</span>, <span class="dv">1</span>), <span class="at">class =</span> b)),</span>
+<span id="cb205-9"><a href="#cb205-9" aria-hidden="true" tabindex="-1"></a>      <span class="at">iter =</span> <span class="dv">2000</span>, <span class="at">warmup =</span> <span class="dv">1000</span>, <span class="at">cores =</span> <span class="dv">3</span>, <span class="at">chains =</span> <span class="dv">3</span>,</span>
+<span id="cb205-10"><a href="#cb205-10" aria-hidden="true" tabindex="-1"></a>      <span class="at">seed =</span> <span class="dv">11</span>,</span>
+<span id="cb205-11"><a href="#cb205-11" aria-hidden="true" tabindex="-1"></a>      <span class="at">file =</span> <span class="st">"fits/UCB_admissions_model_ability_direct_u"</span>)</span>
+<span id="cb205-12"><a href="#cb205-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb205-13"><a href="#cb205-13" aria-hidden="true" tabindex="-1"></a>new_data <span class="ot">&lt;-</span> <span class="fu">expand_grid</span>(<span class="at">Gender =</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">2</span>),</span>
+<span id="cb205-14"><a href="#cb205-14" aria-hidden="true" tabindex="-1"></a>                        <span class="at">Department =</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">2</span>),</span>
+<span id="cb205-15"><a href="#cb205-15" aria-hidden="true" tabindex="-1"></a>                        <span class="at">u =</span> <span class="dv">1</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb205-16"><a href="#cb205-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">id =</span> <span class="fu">paste</span>(<span class="st">"V"</span>, <span class="dv">1</span><span class="sc">:</span><span class="dv">4</span>, <span class="at">sep =</span> <span class="st">""</span>)) </span>
+<span id="cb205-17"><a href="#cb205-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb205-18"><a href="#cb205-18" aria-hidden="true" tabindex="-1"></a><span class="fu">as_tibble</span>(<span class="fu">fitted</span>(UCB_admissions_model_ability_direct_u, <span class="at">newdata =</span> new_data, <span class="at">summary =</span> F)) <span class="sc">%&gt;%</span> </span>
+<span id="cb205-19"><a href="#cb205-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">posterior_draw =</span> <span class="dv">1</span><span class="sc">:</span><span class="fu">n</span>(),</span>
+<span id="cb205-20"><a href="#cb205-20" aria-hidden="true" tabindex="-1"></a>         <span class="at">dep_1_contrast =</span> V1 <span class="sc">-</span> V3,</span>
+<span id="cb205-21"><a href="#cb205-21" aria-hidden="true" tabindex="-1"></a>         <span class="at">dep_2_contrast =</span> V2 <span class="sc">-</span> V4) <span class="sc">%&gt;%</span></span>
+<span id="cb205-22"><a href="#cb205-22" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="fu">contains</span>(<span class="st">"contrast"</span>)) <span class="sc">%&gt;%</span> </span>
+<span id="cb205-23"><a href="#cb205-23" aria-hidden="true" tabindex="-1"></a>  tidyr<span class="sc">::</span><span class="fu">gather</span>(<span class="at">key =</span> id, <span class="at">value =</span> gender_contrast) <span class="sc">%&gt;%</span></span>
+<span id="cb205-24"><a href="#cb205-24" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">dep =</span> <span class="fu">str_remove</span>(id, <span class="st">"dep_"</span>),</span>
+<span id="cb205-25"><a href="#cb205-25" aria-hidden="true" tabindex="-1"></a>         <span class="at">dep =</span> <span class="fu">str_remove</span>(dep, <span class="st">"_contrast"</span>)) <span class="sc">%&gt;%</span> </span>
+<span id="cb205-26"><a href="#cb205-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb205-27"><a href="#cb205-27" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(dep, gender_contrast)) <span class="sc">+</span> </span>
+<span id="cb205-28"><a href="#cb205-28" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stat_halfeye</span>(<span class="fu">aes</span>(<span class="at">fill =</span> dep), <span class="at">.width =</span> <span class="fu">c</span>(<span class="fl">0.66</span>, <span class="fl">0.95</span>)) <span class="sc">+</span> <span class="co"># width indicates the uncertainty intervals: here we have 66% and 95% intervals</span></span>
+<span id="cb205-29"><a href="#cb205-29" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_fill_manual</span>(<span class="at">values =</span> <span class="fu">met.brewer</span>(<span class="st">"Monet"</span>)) <span class="sc">+</span></span>
+<span id="cb205-30"><a href="#cb205-30" aria-hidden="true" tabindex="-1"></a>  <span class="fu">coord_flip</span>() <span class="sc">+</span></span>
+<span id="cb205-31"><a href="#cb205-31" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_hline</span>(<span class="at">yintercept =</span> <span class="dv">0</span>, <span class="at">linetype =</span> <span class="dv">2</span>) <span class="sc">+</span></span>
+<span id="cb205-32"><a href="#cb205-32" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ylab</span>(<span class="st">"F-M constrast (probability)"</span>) <span class="sc">+</span></span>
+<span id="cb205-33"><a href="#cb205-33" aria-hidden="true" tabindex="-1"></a>  <span class="fu">xlab</span>(<span class="st">"Department"</span>) <span class="sc">+</span></span>
+<span id="cb205-34"><a href="#cb205-34" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>() <span class="sc">+</span> </span>
+<span id="cb205-35"><a href="#cb205-35" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">legend.position =</span> <span class="st">"none"</span>,</span>
+<span id="cb205-36"><a href="#cb205-36" aria-hidden="true" tabindex="-1"></a>        <span class="at">panel.grid.minor =</span> <span class="fu">element_blank</span>())</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<p><img src="unimelb_statistical_rethinking_2023_files/figure-html/unnamed-chunk-154-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<p>See now that the bias becomes clear after stratifying on ability.</p>
+<p>In reality we rarely have data on these unknown confounds.</p>
+<p><span class="math inline">\(~\)</span></p>
+</section>
+<section id="poisson-counts-oceanic-tool-use" class="level2">
+<h2 class="anchored" data-anchor-id="poisson-counts-oceanic-tool-use">Poisson counts: Oceanic tool use</h2>
+<p><span class="math inline">\(~\)</span></p>
+</section>
+<section id="a-new-example-oceanic-tool-use" class="level2">
+<h2 class="anchored" data-anchor-id="a-new-example-oceanic-tool-use">A new example: Oceanic tool use</h2>
+<p><span class="math inline">\(~\)</span></p>
+<div class="cell">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb206"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb206-1"><a href="#cb206-1" aria-hidden="true" tabindex="-1"></a><span class="fu">data</span>(Kline2, <span class="at">package =</span> <span class="st">"rethinking"</span>)</span>
+<span id="cb206-2"><a href="#cb206-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb206-3"><a href="#cb206-3" aria-hidden="true" tabindex="-1"></a>Oceanic_tools <span class="ot">&lt;-</span> <span class="fu">as_tibble</span>(Kline)</span>
+<span id="cb206-4"><a href="#cb206-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb206-5"><a href="#cb206-5" aria-hidden="true" tabindex="-1"></a>Oceanic_tools <span class="ot">&lt;-</span></span>
+<span id="cb206-6"><a href="#cb206-6" aria-hidden="true" tabindex="-1"></a>  Oceanic_tools <span class="sc">%&gt;%</span> </span>
+<span id="cb206-7"><a href="#cb206-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">log_pop_std =</span> (<span class="fu">log</span>(population) <span class="sc">-</span> <span class="fu">mean</span>(<span class="fu">log</span>(population))) <span class="sc">/</span> <span class="fu">sd</span>(<span class="fu">log</span>(population)),</span>
+<span id="cb206-8"><a href="#cb206-8" aria-hidden="true" tabindex="-1"></a>         <span class="at">contact_id =</span> <span class="fu">if_else</span>(contact <span class="sc">==</span> <span class="st">"high"</span>, <span class="dv">2</span>, <span class="dv">1</span>),</span>
+<span id="cb206-9"><a href="#cb206-9" aria-hidden="true" tabindex="-1"></a>         <span class="at">contact_id =</span> <span class="fu">as.factor</span>(contact_id)) <span class="co"># high contact is coded as 2, low as 1</span></span>
+<span id="cb206-10"><a href="#cb206-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb206-11"><a href="#cb206-11" aria-hidden="true" tabindex="-1"></a>Oceanic_tools</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 10 × 7
+   culture    population contact total_tools mean_TU log_pop_std contact_id
+   &lt;fct&gt;           &lt;int&gt; &lt;fct&gt;         &lt;int&gt;   &lt;dbl&gt;       &lt;dbl&gt; &lt;fct&gt;     
+ 1 Malekula         1100 low              13     3.2    -1.29    1         
+ 2 Tikopia          1500 low              22     4.7    -1.09    1         
+ 3 Santa Cruz       3600 low              24     4      -0.516   1         
+ 4 Yap              4791 high             43     5      -0.329   2         
+ 5 Lau Fiji         7400 high             33     5      -0.0443  2         
+ 6 Trobriand        8000 high             19     4       0.00667 2         
+ 7 Chuuk            9200 high             40     3.8     0.0981  2         
+ 8 Manus           13000 low              28     6.6     0.324   1         
+ 9 Tonga           17500 high             55     5.4     0.519   2         
+10 Hawaii         275000 low              71     6.6     2.32    1         </code></pre>
+</div>
+</div>
+<ul>
+<li><p>Population size and contact with other populations increase innovation.</p></li>
+<li><p>The number of tools increases the likelihood of losing tools</p></li>
+</ul>
+<p>DAG time!</p>
+<div class="cell">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb208"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb208-1"><a href="#cb208-1" aria-hidden="true" tabindex="-1"></a>dag_coords <span class="ot">&lt;-</span></span>
+<span id="cb208-2"><a href="#cb208-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tibble</span>(<span class="at">name =</span> <span class="fu">c</span>(<span class="st">"C"</span>, <span class="st">"P"</span>, <span class="st">"L"</span>, <span class="st">"T"</span>),</span>
+<span id="cb208-3"><a href="#cb208-3" aria-hidden="true" tabindex="-1"></a>         <span class="at">x    =</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">2</span>),</span>
+<span id="cb208-4"><a href="#cb208-4" aria-hidden="true" tabindex="-1"></a>         <span class="at">y    =</span> <span class="fu">c</span>(<span class="dv">2</span>, <span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">1</span>))</span>
+<span id="cb208-5"><a href="#cb208-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb208-6"><a href="#cb208-6" aria-hidden="true" tabindex="-1"></a><span class="fu">dagify</span>(C <span class="sc">~</span> L <span class="sc">+</span> P,</span>
+<span id="cb208-7"><a href="#cb208-7" aria-hidden="true" tabindex="-1"></a>       P <span class="sc">~</span> L,</span>
+<span id="cb208-8"><a href="#cb208-8" aria-hidden="true" tabindex="-1"></a>       T <span class="sc">~</span> C <span class="sc">+</span> P <span class="sc">+</span> L,</span>
+<span id="cb208-9"><a href="#cb208-9" aria-hidden="true" tabindex="-1"></a>       <span class="at">coords =</span> dag_coords) <span class="sc">%&gt;%</span></span>
+<span id="cb208-10"><a href="#cb208-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">gg_simple_dag</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<p><img src="unimelb_statistical_rethinking_2023_files/figure-html/unnamed-chunk-156-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<p><strong>Our goal is to estimate the effect of population size on tools</strong>.</p>
+<p>Let’s identify all of the paths:</p>
+<ol type="1">
+<li><p>P -&gt; T - front door path</p></li>
+<li><p>P -&gt; C -&gt; T - C is a competing cause of tool count</p></li>
+<li><p>P -&gt; C &lt;- L -&gt; T</p></li>
+<li><p><strong>P &lt;- L -&gt; T</strong> - L creates a fork. This is a back-door path</p></li>
+</ol>
+<p><span class="math inline">\(~\)</span></p>
+<p><strong>Modelling tools - the poisson</strong></p>
+<p><span class="math inline">\(~\)</span></p>
+<p>Tool count is not binomial: this is because there is no maximum</p>
+<p>We can instead use the <strong>poisson distribution</strong></p>
+<ul>
+<li><p>Very high maximum and very low probability of each success</p></li>
+<li><p>For example, in these data there are many possible technologies, but very few are realised in any one place</p></li>
+<li><p>The link function for the poisson distribution is the <strong>log</strong> link</p></li>
+<li><p>This link function enforces positivity, as needed for a count</p></li>
+<li><p>Note that this creates exponential scaling</p></li>
+</ul>
+<p><strong>Priors</strong></p>
+<p>If we continue our convention of using a Normal prior on the parameters, we should recognize those will be log-Normal distributed on the outcome scale. Why? Because we’re modelling the rate with the log link.</p>
+<p>Lets plot an alpha prior of normal(0, 10) and one of Normal(3, 0.5)</p>
+<div class="cell">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb209"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb209-1"><a href="#cb209-1" aria-hidden="true" tabindex="-1"></a><span class="fu">tibble</span>(<span class="at">x       =</span> <span class="fu">c</span>(<span class="dv">3</span>, <span class="dv">22</span>),</span>
+<span id="cb209-2"><a href="#cb209-2" aria-hidden="true" tabindex="-1"></a>       <span class="at">y       =</span> <span class="fu">c</span>(<span class="fl">0.055</span>, <span class="fl">0.04</span>),</span>
+<span id="cb209-3"><a href="#cb209-3" aria-hidden="true" tabindex="-1"></a>       <span class="at">meanlog =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">3</span>),</span>
+<span id="cb209-4"><a href="#cb209-4" aria-hidden="true" tabindex="-1"></a>       <span class="at">sdlog   =</span> <span class="fu">c</span>(<span class="dv">10</span>, <span class="fl">0.5</span>)) <span class="sc">%&gt;%</span> </span>
+<span id="cb209-5"><a href="#cb209-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">expand</span>(<span class="fu">nesting</span>(x, y, meanlog, sdlog),</span>
+<span id="cb209-6"><a href="#cb209-6" aria-hidden="true" tabindex="-1"></a>         <span class="at">number =</span> <span class="fu">seq</span>(<span class="at">from =</span> <span class="dv">0</span>, <span class="at">to =</span> <span class="dv">100</span>, <span class="at">length.out =</span> <span class="dv">200</span>)) <span class="sc">%&gt;%</span> </span>
+<span id="cb209-7"><a href="#cb209-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">density =</span> <span class="fu">dlnorm</span>(number, meanlog, sdlog),</span>
+<span id="cb209-8"><a href="#cb209-8" aria-hidden="true" tabindex="-1"></a>         <span class="at">group   =</span> <span class="fu">str_c</span>(<span class="st">"alpha%~%Normal("</span>, meanlog, <span class="st">", "</span>, sdlog, <span class="st">")"</span>)) <span class="sc">%&gt;%</span> </span>
+<span id="cb209-9"><a href="#cb209-9" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb209-10"><a href="#cb209-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">fill =</span> group, <span class="at">color =</span> group)) <span class="sc">+</span></span>
+<span id="cb209-11"><a href="#cb209-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_area</span>(<span class="fu">aes</span>(<span class="at">x =</span> number, <span class="at">y =</span> density),</span>
+<span id="cb209-12"><a href="#cb209-12" aria-hidden="true" tabindex="-1"></a>            <span class="at">alpha =</span> <span class="dv">3</span><span class="sc">/</span><span class="dv">4</span>, <span class="at">size =</span> <span class="dv">0</span>, <span class="at">position =</span> <span class="st">"identity"</span>) <span class="sc">+</span></span>
+<span id="cb209-13"><a href="#cb209-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_text</span>(<span class="at">data =</span> . <span class="sc">%&gt;%</span> <span class="fu">group_by</span>(group) <span class="sc">%&gt;%</span> <span class="fu">slice</span>(<span class="dv">1</span>),</span>
+<span id="cb209-14"><a href="#cb209-14" aria-hidden="true" tabindex="-1"></a>            <span class="fu">aes</span>(<span class="at">x =</span> x, <span class="at">y =</span> y, <span class="at">label =</span> group),</span>
+<span id="cb209-15"><a href="#cb209-15" aria-hidden="true" tabindex="-1"></a>            <span class="at">family =</span> <span class="st">"Times"</span>, <span class="at">parse =</span> T,  <span class="at">hjust =</span> <span class="dv">0</span>) <span class="sc">+</span></span>
+<span id="cb209-16"><a href="#cb209-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_fill_manual</span>(<span class="at">values =</span> <span class="fu">met.brewer</span>(<span class="st">"Hokusai3"</span>)[<span class="dv">1</span><span class="sc">:</span><span class="dv">2</span>]) <span class="sc">+</span></span>
+<span id="cb209-17"><a href="#cb209-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_color_manual</span>(<span class="at">values =</span> <span class="fu">met.brewer</span>(<span class="st">"Hokusai3"</span>)[<span class="dv">1</span><span class="sc">:</span><span class="dv">2</span>]) <span class="sc">+</span></span>
+<span id="cb209-18"><a href="#cb209-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_y_continuous</span>(<span class="cn">NULL</span>, <span class="at">breaks =</span> <span class="cn">NULL</span>) <span class="sc">+</span></span>
+<span id="cb209-19"><a href="#cb209-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">xlab</span>(<span class="st">"mean number of tools"</span>) <span class="sc">+</span></span>
+<span id="cb209-20"><a href="#cb209-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_tidybayes</span>() <span class="sc">+</span></span>
+<span id="cb209-21"><a href="#cb209-21" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">legend.position =</span> <span class="st">"none"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<p><img src="unimelb_statistical_rethinking_2023_files/figure-html/unnamed-chunk-157-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<p>Note the very large right tail for Normal (0, 10)</p>
+<p>The second prior always expects some tools, which is more sensible for human societies</p>
+<p>**How about *</p>
+<p>Plot ~ Normal (0, 1) and ~ Normal (0, 10).</p>
+<p>Also plot ~ Normal (3, 0.5) and ~ Normal (0, 0.2)</p>
+<div class="cell">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb210"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb210-1"><a href="#cb210-1" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">11</span>)</span>
+<span id="cb210-2"><a href="#cb210-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb210-3"><a href="#cb210-3" aria-hidden="true" tabindex="-1"></a><span class="co"># how many lines would you like?</span></span>
+<span id="cb210-4"><a href="#cb210-4" aria-hidden="true" tabindex="-1"></a>n <span class="ot">&lt;-</span> <span class="dv">100</span></span>
+<span id="cb210-5"><a href="#cb210-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb210-6"><a href="#cb210-6" aria-hidden="true" tabindex="-1"></a><span class="co"># simulate and wrangle</span></span>
+<span id="cb210-7"><a href="#cb210-7" aria-hidden="true" tabindex="-1"></a><span class="fu">tibble</span>(<span class="at">i =</span> <span class="dv">1</span><span class="sc">:</span>n,</span>
+<span id="cb210-8"><a href="#cb210-8" aria-hidden="true" tabindex="-1"></a>       <span class="at">a =</span> <span class="fu">rnorm</span>(n, <span class="at">mean =</span> <span class="dv">3</span>, <span class="at">sd =</span> <span class="fl">0.5</span>)) <span class="sc">%&gt;%</span> </span>
+<span id="cb210-9"><a href="#cb210-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="st">`</span><span class="at">beta%~%Normal(0*', '*10)</span><span class="st">`</span>  <span class="ot">=</span> <span class="fu">rnorm</span>(n, <span class="at">mean =</span> <span class="dv">0</span> , <span class="at">sd =</span> <span class="dv">10</span>),</span>
+<span id="cb210-10"><a href="#cb210-10" aria-hidden="true" tabindex="-1"></a>         <span class="st">`</span><span class="at">beta%~%Normal(0*', '*0.2)</span><span class="st">`</span> <span class="ot">=</span> <span class="fu">rnorm</span>(n, <span class="at">mean =</span> <span class="dv">0</span> , <span class="at">sd =</span> <span class="fl">0.2</span>)) <span class="sc">%&gt;%</span> </span>
+<span id="cb210-11"><a href="#cb210-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_longer</span>(<span class="fu">contains</span>(<span class="st">"beta"</span>),</span>
+<span id="cb210-12"><a href="#cb210-12" aria-hidden="true" tabindex="-1"></a>               <span class="at">values_to =</span> <span class="st">"b"</span>,</span>
+<span id="cb210-13"><a href="#cb210-13" aria-hidden="true" tabindex="-1"></a>               <span class="at">names_to =</span> <span class="st">"prior"</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb210-14"><a href="#cb210-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">expand</span>(<span class="fu">nesting</span>(i, a, b, prior),</span>
+<span id="cb210-15"><a href="#cb210-15" aria-hidden="true" tabindex="-1"></a>         <span class="at">x =</span> <span class="fu">seq</span>(<span class="at">from =</span> <span class="sc">-</span><span class="dv">2</span>, <span class="at">to =</span> <span class="dv">2</span>, <span class="at">length.out =</span> <span class="dv">100</span>)) <span class="sc">%&gt;%</span> </span>
+<span id="cb210-16"><a href="#cb210-16" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb210-17"><a href="#cb210-17" aria-hidden="true" tabindex="-1"></a>  <span class="co"># plot</span></span>
+<span id="cb210-18"><a href="#cb210-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> x, <span class="at">y =</span> <span class="fu">exp</span>(a <span class="sc">+</span> b <span class="sc">*</span> x), <span class="at">group =</span> i)) <span class="sc">+</span></span>
+<span id="cb210-19"><a href="#cb210-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>(<span class="at">size =</span> <span class="dv">1</span><span class="sc">/</span><span class="dv">4</span>, <span class="at">alpha =</span> <span class="dv">2</span><span class="sc">/</span><span class="dv">3</span>,</span>
+<span id="cb210-20"><a href="#cb210-20" aria-hidden="true" tabindex="-1"></a>            <span class="at">color =</span> <span class="fu">met.brewer</span>(<span class="st">"Hokusai3"</span>)[<span class="dv">4</span>]) <span class="sc">+</span></span>
+<span id="cb210-21"><a href="#cb210-21" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">"log population (std)"</span>,</span>
+<span id="cb210-22"><a href="#cb210-22" aria-hidden="true" tabindex="-1"></a>       <span class="at">y =</span> <span class="st">"total tools"</span>) <span class="sc">+</span></span>
+<span id="cb210-23"><a href="#cb210-23" aria-hidden="true" tabindex="-1"></a>  <span class="fu">coord_cartesian</span>(<span class="at">ylim =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">100</span>)) <span class="sc">+</span></span>
+<span id="cb210-24"><a href="#cb210-24" aria-hidden="true" tabindex="-1"></a>  <span class="fu">facet_wrap</span>(<span class="sc">~</span> prior, <span class="at">labeller =</span> label_parsed) <span class="sc">+</span></span>
+<span id="cb210-25"><a href="#cb210-25" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_tidybayes</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<p><img src="unimelb_statistical_rethinking_2023_files/figure-html/unnamed-chunk-158-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<p>The right prior is truly awful - counts shoot into space! The left one is reasonable though.</p>
+<p>Now we’ve settled on some sensible priors, let’s fit models</p>
+<div class="cell">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb211"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb211-1"><a href="#cb211-1" aria-hidden="true" tabindex="-1"></a><span class="co"># fit intercept model</span></span>
+<span id="cb211-2"><a href="#cb211-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb211-3"><a href="#cb211-3" aria-hidden="true" tabindex="-1"></a>Oceanic_tools_1 <span class="ot">&lt;-</span></span>
+<span id="cb211-4"><a href="#cb211-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">brm</span>(total_tools <span class="sc">~</span> <span class="dv">1</span>,</span>
+<span id="cb211-5"><a href="#cb211-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">data =</span> Oceanic_tools, <span class="at">family =</span> poisson,</span>
+<span id="cb211-6"><a href="#cb211-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">prior =</span> <span class="fu">c</span>(<span class="fu">prior</span>(<span class="fu">normal</span>(<span class="dv">3</span>, <span class="fl">0.5</span>), <span class="at">class =</span> Intercept)),</span>
+<span id="cb211-7"><a href="#cb211-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">iter =</span> <span class="dv">4000</span>, <span class="at">warmup =</span> <span class="dv">2000</span>, <span class="at">cores =</span> <span class="dv">4</span>, <span class="at">chains =</span> <span class="dv">4</span>,</span>
+<span id="cb211-8"><a href="#cb211-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">file =</span> <span class="st">"fits/Oceanic_tools_1"</span>)</span>
+<span id="cb211-9"><a href="#cb211-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb211-10"><a href="#cb211-10" aria-hidden="true" tabindex="-1"></a><span class="co"># Fit interaction model</span></span>
+<span id="cb211-11"><a href="#cb211-11" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb211-12"><a href="#cb211-12" aria-hidden="true" tabindex="-1"></a>Oceanic_tools_2 <span class="ot">&lt;-</span></span>
+<span id="cb211-13"><a href="#cb211-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">brm</span>(total_tools <span class="sc">~</span> <span class="dv">1</span> <span class="sc">+</span> contact_id <span class="sc">*</span> log_pop_std,</span>
+<span id="cb211-14"><a href="#cb211-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">data =</span> Oceanic_tools, <span class="at">family =</span> poisson,</span>
+<span id="cb211-15"><a href="#cb211-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">prior =</span> <span class="fu">c</span>(<span class="fu">prior</span>(<span class="fu">normal</span>(<span class="dv">3</span>, <span class="fl">0.5</span>), <span class="at">class =</span> Intercept),</span>
+<span id="cb211-16"><a href="#cb211-16" aria-hidden="true" tabindex="-1"></a>              <span class="fu">prior</span>(<span class="fu">normal</span>(<span class="dv">0</span>, <span class="fl">0.2</span>), <span class="at">class =</span> b)),</span>
+<span id="cb211-17"><a href="#cb211-17" aria-hidden="true" tabindex="-1"></a>    <span class="at">iter =</span> <span class="dv">4000</span>, <span class="at">warmup =</span> <span class="dv">2000</span>, <span class="at">cores =</span> <span class="dv">4</span>, <span class="at">chains =</span> <span class="dv">4</span>,</span>
+<span id="cb211-18"><a href="#cb211-18" aria-hidden="true" tabindex="-1"></a>    <span class="at">file =</span> <span class="st">"fits/Oceanic_tools_2"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
+<p>Use LOO to compare using PSIS</p>
+<div class="cell">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb212"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb212-1"><a href="#cb212-1" aria-hidden="true" tabindex="-1"></a>Oceanic_tools_1  <span class="ot">&lt;-</span> <span class="fu">add_criterion</span>(Oceanic_tools_1, <span class="st">"loo"</span>)</span>
+<span id="cb212-2"><a href="#cb212-2" aria-hidden="true" tabindex="-1"></a>Oceanic_tools_2 <span class="ot">&lt;-</span> <span class="fu">add_criterion</span>(Oceanic_tools_2, <span class="st">"loo"</span>)</span>
+<span id="cb212-3"><a href="#cb212-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb212-4"><a href="#cb212-4" aria-hidden="true" tabindex="-1"></a><span class="fu">loo_compare</span>(Oceanic_tools_1, Oceanic_tools_2, <span class="at">criterion =</span> <span class="st">"loo"</span>) <span class="sc">%&gt;%</span> <span class="fu">print</span>(<span class="at">simplify =</span> F)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>                elpd_diff se_diff elpd_loo se_elpd_loo p_loo se_p_loo looic
+Oceanic_tools_2   0.0       0.0   -41.3      5.6         6.0   2.0     82.7
+Oceanic_tools_1 -29.6      17.1   -71.0     17.0         8.5   3.8    141.9
+                se_looic
+Oceanic_tools_2  11.3   
+Oceanic_tools_1  34.1   </code></pre>
+</div>
+</div>
+<p>Note the pareto k values that are being flagged. Outliers with a large influence on the posterior are present.</p>
+<div class="cell">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb214"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb214-1"><a href="#cb214-1" aria-hidden="true" tabindex="-1"></a><span class="fu">loo</span>(Oceanic_tools_2) <span class="sc">%&gt;%</span> loo<span class="sc">::</span><span class="fu">pareto_k_table</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>Pareto k diagnostic values:
+                         Count Pct.    Min. n_eff
+(-Inf, 0.5]   (good)     7     70.0%   782       
+ (0.5, 0.7]   (ok)       0      0.0%   &lt;NA&gt;      
+   (0.7, 1]   (bad)      2     20.0%   158       
+   (1, Inf)   (very bad) 1     10.0%   81        </code></pre>
+</div>
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb216"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb216-1"><a href="#cb216-1" aria-hidden="true" tabindex="-1"></a><span class="fu">tibble</span>(<span class="at">culture =</span> Oceanic_tools<span class="sc">$</span>culture,</span>
+<span id="cb216-2"><a href="#cb216-2" aria-hidden="true" tabindex="-1"></a>       <span class="at">k       =</span> Oceanic_tools_2<span class="sc">$</span>criteria<span class="sc">$</span>loo<span class="sc">$</span>diagnostics<span class="sc">$</span>pareto_k) <span class="sc">%&gt;%</span> </span>
+<span id="cb216-3"><a href="#cb216-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(<span class="fu">desc</span>(k)) <span class="sc">%&gt;%</span> </span>
+<span id="cb216-4"><a href="#cb216-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate_if</span>(is.double, round, <span class="at">digits =</span> <span class="dv">2</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 10 × 2
+   culture        k
+   &lt;fct&gt;      &lt;dbl&gt;
+ 1 Hawaii      1.04
+ 2 Tonga       0.79
+ 3 Yap         0.76
+ 4 Trobriand   0.47
+ 5 Malekula    0.41
+ 6 Manus       0.34
+ 7 Chuuk       0.3 
+ 8 Tikopia     0.28
+ 9 Santa Cruz  0.2 
+10 Lau Fiji    0.19</code></pre>
+</div>
+</div>
+<p>See that Hawaii and Tonga are having large effects on the fit.</p>
+<p>Plot the interaction model</p>
+<div class="cell">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb218"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb218-1"><a href="#cb218-1" aria-hidden="true" tabindex="-1"></a>cultures <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"Hawaii"</span>, <span class="st">"Tonga"</span>, <span class="st">"Trobriand"</span>, <span class="st">"Yap"</span>)</span>
+<span id="cb218-2"><a href="#cb218-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb218-3"><a href="#cb218-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ggrepel)</span>
+<span id="cb218-4"><a href="#cb218-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb218-5"><a href="#cb218-5" aria-hidden="true" tabindex="-1"></a>nd <span class="ot">&lt;-</span></span>
+<span id="cb218-6"><a href="#cb218-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">distinct</span>(Oceanic_tools, contact_id) <span class="sc">%&gt;%</span> </span>
+<span id="cb218-7"><a href="#cb218-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">expand</span>(contact_id, </span>
+<span id="cb218-8"><a href="#cb218-8" aria-hidden="true" tabindex="-1"></a>         <span class="at">log_pop_std =</span> <span class="fu">seq</span>(<span class="at">from =</span> <span class="sc">-</span><span class="fl">4.5</span>, <span class="at">to =</span> <span class="fl">2.5</span>, <span class="at">length.out =</span> <span class="dv">100</span>))</span>
+<span id="cb218-9"><a href="#cb218-9" aria-hidden="true" tabindex="-1"></a>f <span class="ot">&lt;-</span> </span>
+<span id="cb218-10"><a href="#cb218-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">fitted</span>(Oceanic_tools_2,</span>
+<span id="cb218-11"><a href="#cb218-11" aria-hidden="true" tabindex="-1"></a>         <span class="at">newdata =</span> nd,</span>
+<span id="cb218-12"><a href="#cb218-12" aria-hidden="true" tabindex="-1"></a>         <span class="at">probs =</span> <span class="fu">c</span>(.<span class="dv">055</span>, .<span class="dv">945</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb218-13"><a href="#cb218-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">data.frame</span>() <span class="sc">%&gt;%</span></span>
+<span id="cb218-14"><a href="#cb218-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">bind_cols</span>(nd)</span>
+<span id="cb218-15"><a href="#cb218-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb218-16"><a href="#cb218-16" aria-hidden="true" tabindex="-1"></a>p1 <span class="ot">&lt;-</span></span>
+<span id="cb218-17"><a href="#cb218-17" aria-hidden="true" tabindex="-1"></a>  f <span class="sc">%&gt;%</span></span>
+<span id="cb218-18"><a href="#cb218-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> log_pop_std, <span class="at">group =</span> contact_id, <span class="at">color =</span> contact_id)) <span class="sc">+</span></span>
+<span id="cb218-19"><a href="#cb218-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_smooth</span>(<span class="fu">aes</span>(<span class="at">y =</span> Estimate, <span class="at">ymin =</span> Q5<span class="fl">.5</span>, <span class="at">ymax =</span> Q94<span class="fl">.5</span>, <span class="at">fill =</span> contact_id),</span>
+<span id="cb218-20"><a href="#cb218-20" aria-hidden="true" tabindex="-1"></a>              <span class="at">stat =</span> <span class="st">"identity"</span>,</span>
+<span id="cb218-21"><a href="#cb218-21" aria-hidden="true" tabindex="-1"></a>              <span class="at">alpha =</span> <span class="dv">1</span><span class="sc">/</span><span class="dv">4</span>, <span class="at">size =</span> <span class="dv">1</span><span class="sc">/</span><span class="dv">2</span>) <span class="sc">+</span></span>
+<span id="cb218-22"><a href="#cb218-22" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">data =</span> <span class="fu">bind_cols</span>(Oceanic_tools, Oceanic_tools_2<span class="sc">$</span>criteria<span class="sc">$</span>loo<span class="sc">$</span>diagnostics),</span>
+<span id="cb218-23"><a href="#cb218-23" aria-hidden="true" tabindex="-1"></a>             <span class="fu">aes</span>(<span class="at">y =</span> total_tools, <span class="at">size =</span> pareto_k),</span>
+<span id="cb218-24"><a href="#cb218-24" aria-hidden="true" tabindex="-1"></a>             <span class="at">alpha =</span> <span class="dv">4</span><span class="sc">/</span><span class="dv">5</span>) <span class="sc">+</span></span>
+<span id="cb218-25"><a href="#cb218-25" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_text_repel</span>(<span class="at">data =</span> </span>
+<span id="cb218-26"><a href="#cb218-26" aria-hidden="true" tabindex="-1"></a>                    <span class="fu">bind_cols</span>(Oceanic_tools, Oceanic_tools_2<span class="sc">$</span>criteria<span class="sc">$</span>loo<span class="sc">$</span>diagnostics) <span class="sc">%&gt;%</span> </span>
+<span id="cb218-27"><a href="#cb218-27" aria-hidden="true" tabindex="-1"></a>                    <span class="fu">filter</span>(culture <span class="sc">%in%</span> cultures) <span class="sc">%&gt;%</span> </span>
+<span id="cb218-28"><a href="#cb218-28" aria-hidden="true" tabindex="-1"></a>                    <span class="fu">mutate</span>(<span class="at">label =</span> <span class="fu">str_c</span>(culture, <span class="st">" ("</span>, <span class="fu">round</span>(pareto_k, <span class="at">digits =</span> <span class="dv">2</span>), <span class="st">")"</span>)),</span>
+<span id="cb218-29"><a href="#cb218-29" aria-hidden="true" tabindex="-1"></a>                  <span class="fu">aes</span>(<span class="at">y =</span> total_tools, <span class="at">label =</span> label), </span>
+<span id="cb218-30"><a href="#cb218-30" aria-hidden="true" tabindex="-1"></a>                  <span class="at">size =</span> <span class="dv">3</span>, <span class="at">seed =</span> <span class="dv">11</span>, <span class="at">color =</span> <span class="st">"black"</span>, <span class="at">family =</span> <span class="st">"Times"</span>) <span class="sc">+</span></span>
+<span id="cb218-31"><a href="#cb218-31" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">"log population (std)"</span>,</span>
+<span id="cb218-32"><a href="#cb218-32" aria-hidden="true" tabindex="-1"></a>       <span class="at">y =</span> <span class="st">"total tools"</span>) <span class="sc">+</span></span>
+<span id="cb218-33"><a href="#cb218-33" aria-hidden="true" tabindex="-1"></a>  <span class="fu">coord_cartesian</span>(<span class="at">xlim =</span> <span class="fu">range</span>(Oceanic_tools_2<span class="sc">$</span>data<span class="sc">$</span>log_pop_std),</span>
+<span id="cb218-34"><a href="#cb218-34" aria-hidden="true" tabindex="-1"></a>                  <span class="at">ylim =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">80</span>))</span>
+<span id="cb218-35"><a href="#cb218-35" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb218-36"><a href="#cb218-36" aria-hidden="true" tabindex="-1"></a>p2 <span class="ot">&lt;-</span></span>
+<span id="cb218-37"><a href="#cb218-37" aria-hidden="true" tabindex="-1"></a>  f <span class="sc">%&gt;%</span></span>
+<span id="cb218-38"><a href="#cb218-38" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">population =</span> <span class="fu">exp</span>((log_pop_std <span class="sc">*</span> <span class="fu">sd</span>(<span class="fu">log</span>(Oceanic_tools<span class="sc">$</span>population))) <span class="sc">+</span> <span class="fu">mean</span>(<span class="fu">log</span>(Oceanic_tools<span class="sc">$</span>population)))) <span class="sc">%&gt;%</span> </span>
+<span id="cb218-39"><a href="#cb218-39" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb218-40"><a href="#cb218-40" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> population, <span class="at">group =</span> contact_id, <span class="at">color =</span> contact_id)) <span class="sc">+</span></span>
+<span id="cb218-41"><a href="#cb218-41" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_smooth</span>(<span class="fu">aes</span>(<span class="at">y =</span> Estimate, <span class="at">ymin =</span> Q5<span class="fl">.5</span>, <span class="at">ymax =</span> Q94<span class="fl">.5</span>, <span class="at">fill =</span> contact_id),</span>
+<span id="cb218-42"><a href="#cb218-42" aria-hidden="true" tabindex="-1"></a>              <span class="at">stat =</span> <span class="st">"identity"</span>,</span>
+<span id="cb218-43"><a href="#cb218-43" aria-hidden="true" tabindex="-1"></a>              <span class="at">alpha =</span> <span class="dv">1</span><span class="sc">/</span><span class="dv">4</span>, <span class="at">size =</span> <span class="dv">1</span><span class="sc">/</span><span class="dv">2</span>) <span class="sc">+</span></span>
+<span id="cb218-44"><a href="#cb218-44" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">data =</span> <span class="fu">bind_cols</span>(Oceanic_tools, Oceanic_tools_2<span class="sc">$</span>criteria<span class="sc">$</span>loo<span class="sc">$</span>diagnostics),</span>
+<span id="cb218-45"><a href="#cb218-45" aria-hidden="true" tabindex="-1"></a>             <span class="fu">aes</span>(<span class="at">y =</span> total_tools, <span class="at">size =</span> pareto_k),</span>
+<span id="cb218-46"><a href="#cb218-46" aria-hidden="true" tabindex="-1"></a>             <span class="at">alpha =</span> <span class="dv">4</span><span class="sc">/</span><span class="dv">5</span>) <span class="sc">+</span></span>
+<span id="cb218-47"><a href="#cb218-47" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_x_continuous</span>(<span class="st">"population"</span>, <span class="at">breaks =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">50000</span>, <span class="dv">150000</span>, <span class="dv">250000</span>)) <span class="sc">+</span></span>
+<span id="cb218-48"><a href="#cb218-48" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ylab</span>(<span class="st">"total tools"</span>) <span class="sc">+</span></span>
+<span id="cb218-49"><a href="#cb218-49" aria-hidden="true" tabindex="-1"></a>  <span class="fu">coord_cartesian</span>(<span class="at">xlim =</span> <span class="fu">range</span>(Oceanic_tools<span class="sc">$</span>population),</span>
+<span id="cb218-50"><a href="#cb218-50" aria-hidden="true" tabindex="-1"></a>                  <span class="at">ylim =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">80</span>))</span>
+<span id="cb218-51"><a href="#cb218-51" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb218-52"><a href="#cb218-52" aria-hidden="true" tabindex="-1"></a>(p1 <span class="sc">|</span> p2) <span class="sc">&amp;</span></span>
+<span id="cb218-53"><a href="#cb218-53" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_fill_manual</span>(<span class="at">values =</span> <span class="fu">c</span>(<span class="fu">met.brewer</span>(<span class="st">"Hokusai3"</span>)[<span class="dv">4</span>], <span class="fu">met.brewer</span>(<span class="st">"Hokusai3"</span>)[<span class="dv">7</span>])) <span class="sc">&amp;</span></span>
+<span id="cb218-54"><a href="#cb218-54" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_color_manual</span>(<span class="at">values =</span> <span class="fu">c</span>(<span class="fu">met.brewer</span>(<span class="st">"Hokusai3"</span>)[<span class="dv">4</span>], <span class="fu">met.brewer</span>(<span class="st">"Hokusai3"</span>)[<span class="dv">7</span>])) <span class="sc">&amp;</span></span>
+<span id="cb218-55"><a href="#cb218-55" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_size</span>(<span class="at">range =</span> <span class="fu">c</span>(<span class="dv">2</span>, <span class="dv">5</span>)) <span class="sc">&amp;</span></span>
+<span id="cb218-56"><a href="#cb218-56" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>() <span class="sc">&amp;</span></span>
+<span id="cb218-57"><a href="#cb218-57" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">legend.position =</span> <span class="st">"none"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<p><img src="unimelb_statistical_rethinking_2023_files/figure-html/unnamed-chunk-162-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<p>Hawaii in particular is having a huge effect. Note also that the high contact islands are not represented past a certain population size, but the model continues to predict. This has huge uncertainty. Another quirk of the model is that it predicts a non-zero number of tools for islands with 0 people. This is nonsense.</p>
+<p><strong>Two immediate ways to improve model</strong></p>
+<ol type="1">
+<li><p>Use a model robust to outliers: for this distribution type we can use the gamma-poisson (<strong>negative binomial</strong>)</p></li>
+<li><p>Use a more principled scientific model</p></li>
+</ol>
+<p><strong>We can model this differently</strong>:</p>
+<p>We can model the change per unit time.</p>
+<p><span class="math inline">\(\Delta T = \alpha P^\beta - \gamma T\)</span></p>
+<p>Where</p>
+<ul>
+<li><p>T is the change in tools</p></li>
+<li><p>is the innovation rate</p></li>
+<li><p>establishes diminishing returns</p></li>
+<li><p>then subtract T, the rate of loss</p></li>
+</ul>
+<p>This is not a regression model.</p>
+<p>If we want to find the expected number of tools for a certain population size, we simply solve for T.</p>
+<p><span class="math inline">\(T = \frac{\alpha_{c}P^{\beta C}}{\gamma}\)</span></p>
+<p>Sub this in for in our poisson model!</p>
+<p><strong>Lets fit the innovation/loss model</strong></p>
+<p>All parameters are rates, so they must be positive.</p>
+<p>Two options here:</p>
+<ol type="1">
+<li><p>use exp()</p></li>
+<li><p>use appropriate prior to constrain it to be positive</p></li>
+</ol>
+<div class="cell">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb219"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb219-1"><a href="#cb219-1" aria-hidden="true" tabindex="-1"></a>b11<span class="fl">.11</span> <span class="ot">&lt;-</span></span>
+<span id="cb219-2"><a href="#cb219-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">brm</span>(<span class="at">data =</span> Oceanic_tools, </span>
+<span id="cb219-3"><a href="#cb219-3" aria-hidden="true" tabindex="-1"></a>      <span class="at">family =</span> <span class="fu">poisson</span>(<span class="at">link =</span> <span class="st">"identity"</span>),</span>
+<span id="cb219-4"><a href="#cb219-4" aria-hidden="true" tabindex="-1"></a>      <span class="fu">bf</span>(total_tools <span class="sc">~</span> <span class="fu">exp</span>(a) <span class="sc">*</span> population<span class="sc">^</span>b <span class="sc">/</span> g,</span>
+<span id="cb219-5"><a href="#cb219-5" aria-hidden="true" tabindex="-1"></a>         a <span class="sc">+</span> b <span class="sc">~</span> <span class="dv">0</span> <span class="sc">+</span> contact_id,</span>
+<span id="cb219-6"><a href="#cb219-6" aria-hidden="true" tabindex="-1"></a>         g <span class="sc">~</span> <span class="dv">1</span>,</span>
+<span id="cb219-7"><a href="#cb219-7" aria-hidden="true" tabindex="-1"></a>         <span class="at">nl =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb219-8"><a href="#cb219-8" aria-hidden="true" tabindex="-1"></a>      <span class="at">prior =</span> <span class="fu">c</span>(<span class="fu">prior</span>(<span class="fu">normal</span>(<span class="dv">1</span>, <span class="dv">1</span>), <span class="at">nlpar =</span> a),</span>
+<span id="cb219-9"><a href="#cb219-9" aria-hidden="true" tabindex="-1"></a>                <span class="fu">prior</span>(<span class="fu">exponential</span>(<span class="dv">1</span>), <span class="at">nlpar =</span> b, <span class="at">lb =</span> <span class="dv">0</span>),</span>
+<span id="cb219-10"><a href="#cb219-10" aria-hidden="true" tabindex="-1"></a>                <span class="fu">prior</span>(<span class="fu">exponential</span>(<span class="dv">1</span>), <span class="at">nlpar =</span> g, <span class="at">lb =</span> <span class="dv">0</span>)),</span>
+<span id="cb219-11"><a href="#cb219-11" aria-hidden="true" tabindex="-1"></a>      <span class="at">iter =</span> <span class="dv">2000</span>, <span class="at">warmup =</span> <span class="dv">1000</span>, <span class="at">chains =</span> <span class="dv">4</span>, <span class="at">cores =</span> <span class="dv">4</span>,</span>
+<span id="cb219-12"><a href="#cb219-12" aria-hidden="true" tabindex="-1"></a>      <span class="at">seed =</span> <span class="dv">11</span>,</span>
+<span id="cb219-13"><a href="#cb219-13" aria-hidden="true" tabindex="-1"></a>      <span class="at">control =</span> <span class="fu">list</span>(<span class="at">adapt_delta =</span> .<span class="dv">95</span>),</span>
+<span id="cb219-14"><a href="#cb219-14" aria-hidden="true" tabindex="-1"></a>      <span class="at">file =</span> <span class="st">"fits/b11.11"</span>) </span>
+<span id="cb219-15"><a href="#cb219-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb219-16"><a href="#cb219-16" aria-hidden="true" tabindex="-1"></a>b11<span class="fl">.11</span> <span class="ot">&lt;-</span> <span class="fu">add_criterion</span>(b11<span class="fl">.11</span>, <span class="at">criterion =</span> <span class="st">"loo"</span>, <span class="at">moment_match =</span> T)</span>
+<span id="cb219-17"><a href="#cb219-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb219-18"><a href="#cb219-18" aria-hidden="true" tabindex="-1"></a>b11<span class="fl">.11</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code> Family: poisson 
+  Links: mu = identity 
+Formula: total_tools ~ exp(a) * population^b/g 
+         a ~ 0 + contact_id
+         b ~ 0 + contact_id
+         g ~ 1
+   Data: Oceanic_tools (Number of observations: 10) 
+  Draws: 4 chains, each with iter = 2000; warmup = 1000; thin = 1;
+         total post-warmup draws = 4000
+
+Population-Level Effects: 
+              Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+a_contact_id1     0.88      0.69    -0.57     2.15 1.00     1363     1542
+a_contact_id2     0.97      0.85    -0.73     2.61 1.00     1566     1601
+b_contact_id1     0.26      0.03     0.19     0.33 1.00     1960     1489
+b_contact_id2     0.28      0.10     0.08     0.49 1.00     1096      909
+g_Intercept       1.14      0.75     0.21     3.08 1.00     1198     1299
+
+Draws were sampled using sampling(NUTS). For each parameter, Bulk_ESS
+and Tail_ESS are effective sample size measures, and Rhat is the potential
+scale reduction factor on split chains (at convergence, Rhat = 1).</code></pre>
+</div>
+</div>
+<p>The summary gives hard to interpret parameter values. So plot.</p>
+<div class="cell">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb221"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb221-1"><a href="#cb221-1" aria-hidden="true" tabindex="-1"></a><span class="co"># for the annotation</span></span>
+<span id="cb221-2"><a href="#cb221-2" aria-hidden="true" tabindex="-1"></a>text <span class="ot">&lt;-</span></span>
+<span id="cb221-3"><a href="#cb221-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">distinct</span>(Oceanic_tools, contact_id) <span class="sc">%&gt;%</span> </span>
+<span id="cb221-4"><a href="#cb221-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">contact_id =</span> <span class="fu">if_else</span>(contact_id <span class="sc">==</span> <span class="dv">1</span>, <span class="st">"low"</span>, <span class="st">"high"</span>),</span>
+<span id="cb221-5"><a href="#cb221-5" aria-hidden="true" tabindex="-1"></a>         <span class="at">population  =</span> <span class="fu">c</span>(<span class="dv">210000</span>, <span class="dv">72500</span>),</span>
+<span id="cb221-6"><a href="#cb221-6" aria-hidden="true" tabindex="-1"></a>         <span class="at">total_tools =</span> <span class="fu">c</span>(<span class="dv">59</span>, <span class="dv">68</span>),</span>
+<span id="cb221-7"><a href="#cb221-7" aria-hidden="true" tabindex="-1"></a>         <span class="at">label       =</span> <span class="fu">str_c</span>(contact_id, <span class="st">" contact"</span>))</span>
+<span id="cb221-8"><a href="#cb221-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb221-9"><a href="#cb221-9" aria-hidden="true" tabindex="-1"></a><span class="co"># redefine the new data</span></span>
+<span id="cb221-10"><a href="#cb221-10" aria-hidden="true" tabindex="-1"></a>nd <span class="ot">&lt;-</span></span>
+<span id="cb221-11"><a href="#cb221-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">distinct</span>(Oceanic_tools, contact_id) <span class="sc">%&gt;%</span> </span>
+<span id="cb221-12"><a href="#cb221-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">expand</span>(contact_id, </span>
+<span id="cb221-13"><a href="#cb221-13" aria-hidden="true" tabindex="-1"></a>         <span class="at">population =</span> <span class="fu">seq</span>(<span class="at">from =</span> <span class="dv">0</span>, <span class="at">to =</span> <span class="dv">300000</span>, <span class="at">length.out =</span> <span class="dv">100</span>))</span>
+<span id="cb221-14"><a href="#cb221-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb221-15"><a href="#cb221-15" aria-hidden="true" tabindex="-1"></a><span class="co"># compute the poster predictions for lambda</span></span>
+<span id="cb221-16"><a href="#cb221-16" aria-hidden="true" tabindex="-1"></a><span class="fu">fitted</span>(b11<span class="fl">.11</span>,</span>
+<span id="cb221-17"><a href="#cb221-17" aria-hidden="true" tabindex="-1"></a>       <span class="at">newdata =</span> nd,</span>
+<span id="cb221-18"><a href="#cb221-18" aria-hidden="true" tabindex="-1"></a>       <span class="at">probs =</span> <span class="fu">c</span>(.<span class="dv">055</span>, .<span class="dv">945</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb221-19"><a href="#cb221-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">data.frame</span>() <span class="sc">%&gt;%</span></span>
+<span id="cb221-20"><a href="#cb221-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">bind_cols</span>(nd) <span class="sc">%&gt;%</span></span>
+<span id="cb221-21"><a href="#cb221-21" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb221-22"><a href="#cb221-22" aria-hidden="true" tabindex="-1"></a>  <span class="co"># plot!</span></span>
+<span id="cb221-23"><a href="#cb221-23" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> population, <span class="at">group =</span> contact_id, <span class="at">color =</span> contact_id)) <span class="sc">+</span></span>
+<span id="cb221-24"><a href="#cb221-24" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_smooth</span>(<span class="fu">aes</span>(<span class="at">y =</span> Estimate, <span class="at">ymin =</span> Q5<span class="fl">.5</span>, <span class="at">ymax =</span> Q94<span class="fl">.5</span>, <span class="at">fill =</span> contact_id),</span>
+<span id="cb221-25"><a href="#cb221-25" aria-hidden="true" tabindex="-1"></a>              <span class="at">stat =</span> <span class="st">"identity"</span>,</span>
+<span id="cb221-26"><a href="#cb221-26" aria-hidden="true" tabindex="-1"></a>              <span class="at">alpha =</span> <span class="dv">1</span><span class="sc">/</span><span class="dv">4</span>, <span class="at">size =</span> <span class="dv">1</span><span class="sc">/</span><span class="dv">2</span>) <span class="sc">+</span></span>
+<span id="cb221-27"><a href="#cb221-27" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">data =</span> <span class="fu">bind_cols</span>(Oceanic_tools, b11<span class="fl">.11</span><span class="sc">$</span>criteria<span class="sc">$</span>loo<span class="sc">$</span>diagnostics),</span>
+<span id="cb221-28"><a href="#cb221-28" aria-hidden="true" tabindex="-1"></a>             <span class="fu">aes</span>(<span class="at">y =</span> total_tools, <span class="at">size =</span> pareto_k),</span>
+<span id="cb221-29"><a href="#cb221-29" aria-hidden="true" tabindex="-1"></a>             <span class="at">alpha =</span> <span class="dv">4</span><span class="sc">/</span><span class="dv">5</span>) <span class="sc">+</span></span>
+<span id="cb221-30"><a href="#cb221-30" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_text</span>(<span class="at">data =</span> text,</span>
+<span id="cb221-31"><a href="#cb221-31" aria-hidden="true" tabindex="-1"></a>            <span class="fu">aes</span>(<span class="at">y =</span> total_tools, <span class="at">label =</span> label),</span>
+<span id="cb221-32"><a href="#cb221-32" aria-hidden="true" tabindex="-1"></a>            <span class="at">family =</span> <span class="st">"serif"</span>) <span class="sc">+</span></span>
+<span id="cb221-33"><a href="#cb221-33" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_fill_manual</span>(<span class="at">values =</span> <span class="fu">met.brewer</span>(<span class="st">"Hokusai3"</span>)[<span class="dv">1</span><span class="sc">:</span><span class="dv">4</span>]) <span class="sc">+</span></span>
+<span id="cb221-34"><a href="#cb221-34" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_color_manual</span>(<span class="at">values =</span> <span class="fu">met.brewer</span>(<span class="st">"Hokusai3"</span>)[<span class="dv">1</span><span class="sc">:</span><span class="dv">4</span>]) <span class="sc">+</span></span>
+<span id="cb221-35"><a href="#cb221-35" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_size</span>(<span class="at">range =</span> <span class="fu">c</span>(<span class="dv">2</span>, <span class="dv">5</span>)) <span class="sc">+</span></span>
+<span id="cb221-36"><a href="#cb221-36" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_x_continuous</span>(<span class="st">"population"</span>, <span class="at">breaks =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">50000</span>, <span class="dv">150000</span>, <span class="dv">250000</span>)) <span class="sc">+</span></span>
+<span id="cb221-37"><a href="#cb221-37" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ylab</span>(<span class="st">"total tools"</span>) <span class="sc">+</span></span>
+<span id="cb221-38"><a href="#cb221-38" aria-hidden="true" tabindex="-1"></a>  <span class="fu">coord_cartesian</span>(<span class="at">xlim =</span> <span class="fu">range</span>(Oceanic_tools<span class="sc">$</span>population),</span>
+<span id="cb221-39"><a href="#cb221-39" aria-hidden="true" tabindex="-1"></a>                  <span class="at">ylim =</span> <span class="fu">range</span>(Oceanic_tools<span class="sc">$</span>total_tools)) <span class="sc">+</span></span>
+<span id="cb221-40"><a href="#cb221-40" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>() <span class="sc">+</span></span>
+<span id="cb221-41"><a href="#cb221-41" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">legend.position =</span> <span class="st">"none"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<p><img src="unimelb_statistical_rethinking_2023_files/figure-html/unnamed-chunk-164-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<p>Note that the innovation/loss model stops the different contact lines from crossing.</p>
 <p><span class="math inline">\(~\)</span></p>
 
 
